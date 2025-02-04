@@ -1,14 +1,36 @@
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Heart, Users, ArrowLeft } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const Auth = () => {
   const { type } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isLogin, setIsLogin] = useState(true);
   
   const isDonor = type === "donor";
   const title = isDonor ? "Donor" : "Receiver";
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Mock authentication - in a real app this would validate credentials
+    toast({
+      title: "Success!",
+      description: `${isLogin ? "Logged in" : "Signed up"} successfully as a ${title.toLowerCase()}.`
+    });
+
+    if (isDonor) {
+      navigate("/donor/dashboard");
+    } else {
+      // For now, receivers just see a success message
+      // You can add a receiver dashboard later
+      toast({
+        description: "Receiver dashboard coming soon!"
+      });
+    }
+  };
   
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -38,7 +60,7 @@ const Auth = () => {
         </div>
 
         <div className="mt-8">
-          <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email address
