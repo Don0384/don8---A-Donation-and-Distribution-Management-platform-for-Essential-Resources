@@ -65,6 +65,22 @@ const Auth = () => {
               />
             </div>
 
+            {!isLogin && (
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                  Phone Number
+                </label>
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  required
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-opacity-50 focus:border-opacity-0 focus:ring-offset-0"
+                  placeholder="Enter your phone number"
+                />
+              </div>
+            )}
+
             <button
               type="submit"
               className={`w-full py-3 px-4 rounded-lg text-white font-medium transition-colors duration-200 ${
