@@ -11,9 +11,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const AddDonation = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     donorName: "",
     itemNames: "",
@@ -23,8 +25,17 @@ const AddDonation = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Handle form submission
-    navigate("/donor/dashboard");
+    
+    // Show success toast
+    toast({
+      title: "Success!",
+      description: "Your donation has been submitted successfully.",
+    });
+
+    // Navigate back to dashboard after a short delay
+    setTimeout(() => {
+      navigate("/donor/dashboard");
+    }, 1500);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,14 +78,14 @@ const AddDonation = () => {
 
           <div className="space-y-2">
             <label htmlFor="itemNames" className="block text-sm font-medium text-gray-700">
-              Items for Donation
+              Item Description
             </label>
             <Input
               id="itemNames"
               name="itemNames"
               value={formData.itemNames}
               onChange={handleChange}
-              placeholder="Enter item names"
+              placeholder="Enter item description"
               className="w-full"
               required
             />
