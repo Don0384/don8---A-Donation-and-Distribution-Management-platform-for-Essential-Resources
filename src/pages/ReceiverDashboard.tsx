@@ -9,7 +9,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Mock data for demonstration
 const mockDonations = [
@@ -60,6 +70,11 @@ const categories = [
 
 const ReceiverDashboard = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedDonation, setSelectedDonation] = useState<{
+    id: number;
+    action: 'received' | 'rejected' | null;
+  }>({ id: 0, action: null });
   
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -91,13 +106,23 @@ const ReceiverDashboard = () => {
     }
   };
 
-  const handleStatusChange = (donationId: number, newStatus: 'received' | 'rejected') => {
+  const openConfirmDialog = (donationId: number, action: 'received' | 'rejected') => {
+    setSelectedDonation({ id: donationId, action });
+    setDialogOpen(true);
+  };
+
+  const handleStatusChange = () => {
+    if (!selectedDonation.action) return;
+    
     // In a real app, this would make an API call
     toast({
-      title: `Donation ${newStatus}`,
-      description: `The donation has been ${newStatus} successfully.`,
-      variant: newStatus === 'received' ? 'default' : 'destructive',
+      title: `Donation ${selectedDonation.action}`,
+      description: `The donation has been ${selectedDonation.action} successfully.`,
+      variant: selectedDonation.action === 'received' ? 'default' : 'destructive',
     });
+
+    setDialogOpen(false);
+    setSelectedDonation({ id: 0, action: null });
   };
 
   const filteredDonations = mockDonations.filter(donation => 
@@ -176,14 +201,14 @@ const ReceiverDashboard = () => {
                   {donation.status === 'pending' && (
                     <div className="flex space-x-2 ml-4">
                       <button 
-                        onClick={() => handleStatusChange(donation.id, 'received')}
+                        onClick={() => openConfirmDialog(donation.id, 'received')}
                         className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
                         title="Accept donation"
                       >
                         <Check className="w-5 h-5" />
                       </button>
                       <button 
-                        onClick={() => handleStatusChange(donation.id, 'rejected')}
+                        onClick={() => openConfirmDialog(donation.id, 'rejected')}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
                         title="Reject donation"
                       >
@@ -201,8 +226,32 @@ const ReceiverDashboard = () => {
           )}
         </div>
       </div>
+
+      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {selectedDonation.action === 'received' ? 'Accept Donation' : 'Reject Donation'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to {selectedDonation.action === 'received' ? 'accept' : 'reject'} this donation?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleStatusChange}
+              className={selectedDonation.action === 'received' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
+            >
+              {selectedDonation.action === 'received' ? 'Accept' : 'Reject'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
 
 export default ReceiverDashboard;
+
