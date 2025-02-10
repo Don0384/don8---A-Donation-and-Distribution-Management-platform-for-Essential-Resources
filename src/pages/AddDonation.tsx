@@ -98,10 +98,10 @@ const AddDonation = () => {
             <Input
               id="quantity"
               name="quantity"
-              type="number"
+              type="text"
               value={formData.quantity}
               onChange={handleChange}
-              placeholder="Enter quantity"
+              placeholder="Enter quantity (e.g., 5 boxes, 10 pieces)"
               className="w-full"
               required
             />
