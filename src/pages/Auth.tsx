@@ -24,11 +24,7 @@ const Auth = () => {
     if (isDonor) {
       navigate("/donor/dashboard");
     } else {
-      // For now, receivers just see a success message
-      // You can add a receiver dashboard later
-      toast({
-        description: "Receiver dashboard coming soon!"
-      });
+      navigate("/receiver/dashboard");
     }
   };
   
