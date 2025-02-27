@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -10,35 +11,79 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
+import Navbar from "@/components/Navbar";
 
 const AddDonation = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    donorName: "",
-    itemNames: "",
+    itemName: "",
+    description: "",
     quantity: "",
     category: "",
+    location: ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Show success toast
-    toast({
-      title: "Success!",
-      description: "Your donation has been submitted successfully.",
-    });
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to add a donation.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Insert donation into the database
+      const { data, error } = await supabase
+        .from('donations')
+        .insert({
+          donor_id: user.id,
+          item_name: formData.itemName,
+          description: formData.description || null,
+          quantity: formData.quantity,
+          category: formData.category,
+          location: formData.location,
+          status: 'pending'
+        })
+        .select();
+      
+      if (error) throw error;
+      
+      // Show success toast
+      toast({
+        title: "Success!",
+        description: "Your donation has been submitted successfully.",
+      });
 
-    // Navigate back to dashboard after a short delay
-    setTimeout(() => {
-      navigate("/donor/dashboard");
-    }, 1500);
+      // Navigate back to dashboard after a short delay
+      setTimeout(() => {
+        navigate("/donor/dashboard");
+      }, 1500);
+    } catch (error: any) {
+      console.error('Error adding donation:', error);
+      toast({
+        title: "Error",
+        description: error.message || "An error occurred while submitting your donation.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -48,87 +93,115 @@ const AddDonation = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <button
-        onClick={() => navigate("/donor/dashboard")}
-        className="flex items-center text-gray-600 hover:text-gray-900 mb-6"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Dashboard
-      </button>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Navbar />
+      <div className="flex-1 p-4">
+        <div className="max-w-2xl mx-auto">
+          <button
+            onClick={() => navigate("/donor/dashboard")}
+            className="flex items-center text-gray-600 hover:text-gray-900 mb-6"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </button>
 
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Add New Donation</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-8">Add New Donation</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <label htmlFor="donorName" className="block text-sm font-medium text-gray-700">
-              Donor Name
-            </label>
-            <Input
-              id="donorName"
-              name="donorName"
-              value={formData.donorName}
-              onChange={handleChange}
-              placeholder="Enter donor name"
-              className="w-full"
-              required
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label htmlFor="itemName" className="block text-sm font-medium text-gray-700">
+                Item Name
+              </label>
+              <Input
+                id="itemName"
+                name="itemName"
+                value={formData.itemName}
+                onChange={handleChange}
+                placeholder="Enter item name"
+                className="w-full"
+                required
+              />
+            </div>
 
-          <div className="space-y-2">
-            <label htmlFor="itemNames" className="block text-sm font-medium text-gray-700">
-              Item Description
-            </label>
-            <Input
-              id="itemNames"
-              name="itemNames"
-              value={formData.itemNames}
-              onChange={handleChange}
-              placeholder="Enter item description"
-              className="w-full"
-              required
-            />
-          </div>
+            <div className="space-y-2">
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                Description
+              </label>
+              <Textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                placeholder="Enter item description"
+                className="w-full min-h-[100px]"
+              />
+            </div>
 
-          <div className="space-y-2">
-            <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">
-              Quantity
-            </label>
-            <Input
-              id="quantity"
-              name="quantity"
-              type="text"
-              value={formData.quantity}
-              onChange={handleChange}
-              placeholder="Enter quantity (e.g., 5 boxes, 10 pieces)"
-              className="w-full"
-              required
-            />
-          </div>
+            <div className="space-y-2">
+              <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">
+                Quantity
+              </label>
+              <Input
+                id="quantity"
+                name="quantity"
+                type="text"
+                value={formData.quantity}
+                onChange={handleChange}
+                placeholder="Enter quantity (e.g., 5 boxes, 10 pieces)"
+                className="w-full"
+                required
+              />
+            </div>
 
-          <div className="space-y-2">
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-              Category
-            </label>
-            <Select onValueChange={handleCategoryChange} required>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="clothes">Clothes</SelectItem>
-                <SelectItem value="food">Food</SelectItem>
-                <SelectItem value="electronics">Electronic Equipment</SelectItem>
-                <SelectItem value="medical-equipment">Medical Equipment</SelectItem>
-                <SelectItem value="medicine">Medicine</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            <div className="space-y-2">
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+                Category
+              </label>
+              <Select onValueChange={handleCategoryChange} required>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="clothes">Clothes</SelectItem>
+                  <SelectItem value="food">Food</SelectItem>
+                  <SelectItem value="electronics">Electronic Equipment</SelectItem>
+                  <SelectItem value="medical_equipment">Medical Equipment</SelectItem>
+                  <SelectItem value="medicine">Medicine</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <Button type="submit" className="w-full bg-donor-primary hover:bg-donor-hover">
-            Add Donation
-          </Button>
-        </form>
+            <div className="space-y-2">
+              <label htmlFor="location" className="block text-sm font-medium text-gray-700">
+                Location
+              </label>
+              <Input
+                id="location"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                placeholder="Enter pickup location"
+                className="w-full"
+                required
+              />
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full bg-donor-primary hover:bg-donor-hover"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Add Donation"
+              )}
+            </Button>
+          </form>
+        </div>
       </div>
     </div>
   );

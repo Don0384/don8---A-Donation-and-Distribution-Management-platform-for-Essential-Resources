@@ -1,7 +1,7 @@
 
-import { Clock, Package, Check, X, Filter } from "lucide-react";
+import { Clock, Package, Check, X, Filter, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,61 +21,82 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import Navbar from "@/components/Navbar";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
-// Mock data for demonstration
-const mockDonations = [
-  {
-    id: 1,
-    donorName: "John Doe",
-    itemName: "Winter Jackets",
-    quantity: "5 pieces",
-    category: "Clothing",
-    status: "pending",
-    createdAt: "2024-03-10T10:00:00",
-    location: "123 Main St, City",
-    recipientOrg: "Local Shelter"
-  },
-  {
-    id: 2,
-    donorName: "Jane Smith",
-    itemName: "Fresh Vegetables",
-    quantity: "20 kg",
-    category: "Food - Veg",
-    status: "received",
-    createdAt: "2024-03-09T15:30:00",
-    location: "456 Oak Ave, Town",
-    recipientOrg: "Food Bank"
-  },
-  {
-    id: 3,
-    donorName: "Mike Johnson",
-    itemName: "First Aid Kits",
-    quantity: "10 kits",
-    category: "Medical Equipment",
-    status: "pending",
-    createdAt: "2024-03-11T09:15:00",
-    location: "789 Pine Rd, Village",
-    recipientOrg: "Medical Center"
-  }
-];
+type Donation = {
+  id: number;
+  donor_id: string;
+  item_name: string;
+  description: string | null;
+  quantity: string;
+  category: string;
+  status: string;
+  created_at: string;
+  location: string;
+  donor_info?: {
+    first_name: string | null;
+    last_name: string | null;
+  } | null;
+};
 
 const categories = [
   "All",
-  "Food - Veg",
-  "Food - Non-Veg",
-  "Clothing",
-  "Electronics",
-  "Medical Equipment",
-  "Medicine"
+  "clothes",
+  "food",
+  "electronics",
+  "medical_equipment",
+  "medicine"
 ];
 
+const categoryDisplayNames: Record<string, string> = {
+  clothes: "Clothing",
+  food: "Food",
+  electronics: "Electronics",
+  medical_equipment: "Medical Equipment", 
+  medicine: "Medicine"
+};
+
 const ReceiverDashboard = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedDonation, setSelectedDonation] = useState<{
     id: number;
     action: 'received' | 'rejected' | null;
   }>({ id: 0, action: null });
+  
+  // Fetch donations
+  useEffect(() => {
+    async function fetchDonations() {
+      try {
+        setIsLoading(true);
+        
+        // Get all pending donations
+        const { data, error } = await supabase
+          .from('donations')
+          .select(`
+            *,
+            donor_info:profiles(first_name, last_name)
+          `)
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        setDonations(data || []);
+      } catch (err: any) {
+        console.error('Error fetching donations:', err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchDonations();
+  }, []);
   
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -100,7 +121,7 @@ const ReceiverDashboard = () => {
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
-      case 'Clothing':
+      case 'clothes':
         return <Package className="w-4 h-4" />;
       default:
         return <Package className="w-4 h-4" />;
@@ -112,23 +133,64 @@ const ReceiverDashboard = () => {
     setDialogOpen(true);
   };
 
-  const handleStatusChange = () => {
-    if (!selectedDonation.action) return;
+  const handleStatusChange = async () => {
+    if (!selectedDonation.action || !user) return;
     
-    // In a real app, this would make an API call
-    toast({
-      title: `Donation ${selectedDonation.action}`,
-      description: `The donation has been ${selectedDonation.action} successfully.`,
-      variant: selectedDonation.action === 'received' ? 'default' : 'destructive',
-    });
-
-    setDialogOpen(false);
-    setSelectedDonation({ id: 0, action: null });
+    try {
+      // In a real app, you would make an API call
+      const { error } = await supabase
+        .from('donations')
+        .update({ 
+          status: selectedDonation.action,
+          receiver_id: user.id
+        })
+        .eq('id', selectedDonation.id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setDonations(prev => 
+        prev.map(donation => 
+          donation.id === selectedDonation.id 
+            ? { ...donation, status: selectedDonation.action as string }
+            : donation
+        )
+      );
+      
+      toast({
+        title: `Donation ${selectedDonation.action}`,
+        description: `The donation has been ${selectedDonation.action} successfully.`,
+        variant: selectedDonation.action === 'received' ? 'default' : 'destructive',
+      });
+    } catch (err: any) {
+      console.error('Error updating donation status:', err);
+      toast({
+        title: "Error",
+        description: err.message || "An error occurred while updating the donation status.",
+        variant: "destructive",
+      });
+    } finally {
+      setDialogOpen(false);
+      setSelectedDonation({ id: 0, action: null });
+    }
   };
 
-  const filteredDonations = mockDonations.filter(donation => 
-    selectedCategory === "All" || donation.category === selectedCategory
+  const filteredDonations = donations.filter(donation => 
+    (selectedCategory === "All" || donation.category === selectedCategory)
   );
+
+  const getDonorName = (donation: Donation) => {
+    if (donation.donor_info) {
+      const firstName = donation.donor_info.first_name || '';
+      const lastName = donation.donor_info.last_name || '';
+      return `${firstName} ${lastName}`.trim() || 'Anonymous';
+    }
+    return 'Anonymous';
+  };
+
+  const getCategoryDisplay = (category: string) => {
+    return categoryDisplayNames[category] || category;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -149,7 +211,7 @@ const ReceiverDashboard = () => {
                 <SelectContent>
                   {categories.map((category) => (
                     <SelectItem key={category} value={category}>
-                      {category}
+                      {category === "All" ? "All" : getCategoryDisplay(category)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -157,77 +219,96 @@ const ReceiverDashboard = () => {
             </div>
           </div>
           
-          <div className="grid gap-4">
-            {filteredDonations.length > 0 ? (
-              filteredDonations.map((donation) => (
-                <div 
-                  key={donation.id}
-                  className="bg-white rounded-lg shadow-sm p-6 transition-all hover:shadow-md"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-3 flex-grow">
-                      <div className="flex items-center space-x-3">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {donation.itemName}
-                        </h3>
-                        <Badge 
-                          className={`${getStatusColor(donation.status)} capitalize`}
-                        >
-                          {donation.status}
-                        </Badge>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <div className="flex items-center text-sm text-gray-600 space-x-4">
-                            <span className="flex items-center">
-                              {getCategoryIcon(donation.category)}
-                              <span className="ml-1">{donation.category}</span>
-                            </span>
-                            <span>Quantity: {donation.quantity}</span>
-                          </div>
-                          
-                          <div className="flex items-center text-sm text-gray-500">
-                            <Clock className="w-4 h-4 mr-1" />
-                            {formatDate(donation.createdAt)}
-                          </div>
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            </div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <p className="text-red-500">{error}</p>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="mt-4 text-blue-500 hover:underline"
+              >
+                Try again
+              </button>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {filteredDonations.length > 0 ? (
+                filteredDonations.map((donation) => (
+                  <div 
+                    key={donation.id}
+                    className="bg-white rounded-lg shadow-sm p-6 transition-all hover:shadow-md"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-3 flex-grow">
+                        <div className="flex items-center space-x-3">
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {donation.item_name}
+                          </h3>
+                          <Badge 
+                            className={`${getStatusColor(donation.status)} capitalize`}
+                          >
+                            {donation.status}
+                          </Badge>
                         </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center text-sm text-gray-600 space-x-4">
+                              <span className="flex items-center">
+                                {getCategoryIcon(donation.category)}
+                                <span className="ml-1">{getCategoryDisplay(donation.category)}</span>
+                              </span>
+                              <span>Quantity: {donation.quantity}</span>
+                            </div>
+                            
+                            {donation.description && (
+                              <p className="text-sm text-gray-600">{donation.description}</p>
+                            )}
+                            
+                            <div className="flex items-center text-sm text-gray-500">
+                              <Clock className="w-4 h-4 mr-1" />
+                              {formatDate(donation.created_at)}
+                            </div>
+                          </div>
 
-                        <div className="space-y-2 text-sm text-gray-600">
-                          <p><span className="font-medium">Donor:</span> {donation.donorName}</p>
-                          <p><span className="font-medium">Location:</span> {donation.location}</p>
-                          <p><span className="font-medium">Recipient:</span> {donation.recipientOrg}</p>
+                          <div className="space-y-2 text-sm text-gray-600">
+                            <p><span className="font-medium">Donor:</span> {getDonorName(donation)}</p>
+                            <p><span className="font-medium">Location:</span> {donation.location}</p>
+                          </div>
                         </div>
                       </div>
+
+                      {donation.status === 'pending' && (
+                        <div className="flex space-x-2 ml-4">
+                          <button 
+                            onClick={() => openConfirmDialog(donation.id, 'received')}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
+                            title="Accept donation"
+                          >
+                            <Check className="w-5 h-5" />
+                          </button>
+                          <button 
+                            onClick={() => openConfirmDialog(donation.id, 'rejected')}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                            title="Reject donation"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                      )}
                     </div>
-
-                    {donation.status === 'pending' && (
-                      <div className="flex space-x-2 ml-4">
-                        <button 
-                          onClick={() => openConfirmDialog(donation.id, 'received')}
-                          className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
-                          title="Accept donation"
-                        >
-                          <Check className="w-5 h-5" />
-                        </button>
-                        <button 
-                          onClick={() => openConfirmDialog(donation.id, 'rejected')}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                          title="Reject donation"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
-                      </div>
-                    )}
                   </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-600 text-center py-8">
-                No donations available in this category.
-              </p>
-            )}
-          </div>
+                ))
+              ) : (
+                <p className="text-gray-600 text-center py-8">
+                  No donations available in this category.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
