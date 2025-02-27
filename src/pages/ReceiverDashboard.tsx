@@ -34,10 +34,6 @@ type Donation = {
   status: string;
   created_at: string;
   location: string;
-  donor_info?: {
-    first_name: string | null;
-    last_name: string | null;
-  } | null;
 };
 
 const categories = [
@@ -79,10 +75,8 @@ const ReceiverDashboard = () => {
         // Get all pending donations
         const { data, error } = await supabase
           .from('donations')
-          .select(`
-            *,
-            donor_info:profiles(first_name, last_name)
-          `)
+          .select('*')
+          .eq('status', 'pending')
           .order('created_at', { ascending: false });
         
         if (error) throw error;
@@ -137,7 +131,7 @@ const ReceiverDashboard = () => {
     if (!selectedDonation.action || !user) return;
     
     try {
-      // In a real app, you would make an API call
+      // Update donation status in the database
       const { error } = await supabase
         .from('donations')
         .update({ 
@@ -148,13 +142,9 @@ const ReceiverDashboard = () => {
       
       if (error) throw error;
       
-      // Update local state
+      // Update local state by removing the donation from the list
       setDonations(prev => 
-        prev.map(donation => 
-          donation.id === selectedDonation.id 
-            ? { ...donation, status: selectedDonation.action as string }
-            : donation
-        )
+        prev.filter(donation => donation.id !== selectedDonation.id)
       );
       
       toast({
@@ -178,15 +168,6 @@ const ReceiverDashboard = () => {
   const filteredDonations = donations.filter(donation => 
     (selectedCategory === "All" || donation.category === selectedCategory)
   );
-
-  const getDonorName = (donation: Donation) => {
-    if (donation.donor_info) {
-      const firstName = donation.donor_info.first_name || '';
-      const lastName = donation.donor_info.last_name || '';
-      return `${firstName} ${lastName}`.trim() || 'Anonymous';
-    }
-    return 'Anonymous';
-  };
 
   const getCategoryDisplay = (category: string) => {
     return categoryDisplayNames[category] || category;
@@ -275,7 +256,6 @@ const ReceiverDashboard = () => {
                           </div>
 
                           <div className="space-y-2 text-sm text-gray-600">
-                            <p><span className="font-medium">Donor:</span> {getDonorName(donation)}</p>
                             <p><span className="font-medium">Location:</span> {donation.location}</p>
                           </div>
                         </div>

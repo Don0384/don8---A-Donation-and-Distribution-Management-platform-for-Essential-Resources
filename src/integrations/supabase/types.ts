@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      donations: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          donor_id: string
+          id: number
+          item_name: string
+          location: string
+          quantity: string
+          receiver_id: string | null
+          status: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          donor_id: string
+          id?: number
+          item_name: string
+          location: string
+          quantity: string
+          receiver_id?: string | null
+          status?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          donor_id?: string
+          id?: number
+          item_name?: string
+          location?: string
+          quantity?: string
+          receiver_id?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
