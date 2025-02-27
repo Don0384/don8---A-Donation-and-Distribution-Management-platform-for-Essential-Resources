@@ -20,6 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import Navbar from "@/components/Navbar";
 
 // Mock data for demonstration
 const mockDonations = [
@@ -130,100 +131,103 @@ const ReceiverDashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Available Donations</h1>
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-500" />
-            <Select
-              value={selectedCategory}
-              onValueChange={setSelectedCategory}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        
-        <div className="grid gap-4">
-          {filteredDonations.length > 0 ? (
-            filteredDonations.map((donation) => (
-              <div 
-                key={donation.id}
-                className="bg-white rounded-lg shadow-sm p-6 transition-all hover:shadow-md"
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Navbar />
+      <div className="flex-1 p-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold text-gray-900">Available Donations</h1>
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-gray-500" />
+              <Select
+                value={selectedCategory}
+                onValueChange={setSelectedCategory}
               >
-                <div className="flex items-start justify-between">
-                  <div className="space-y-3 flex-grow">
-                    <div className="flex items-center space-x-3">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {donation.itemName}
-                      </h3>
-                      <Badge 
-                        className={`${getStatusColor(donation.status)} capitalize`}
-                      >
-                        {donation.status}
-                      </Badge>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center text-sm text-gray-600 space-x-4">
-                          <span className="flex items-center">
-                            {getCategoryIcon(donation.category)}
-                            <span className="ml-1">{donation.category}</span>
-                          </span>
-                          <span>Quantity: {donation.quantity}</span>
-                        </div>
-                        
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Clock className="w-4 h-4 mr-1" />
-                          {formatDate(donation.createdAt)}
-                        </div>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="grid gap-4">
+            {filteredDonations.length > 0 ? (
+              filteredDonations.map((donation) => (
+                <div 
+                  key={donation.id}
+                  className="bg-white rounded-lg shadow-sm p-6 transition-all hover:shadow-md"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-3 flex-grow">
+                      <div className="flex items-center space-x-3">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {donation.itemName}
+                        </h3>
+                        <Badge 
+                          className={`${getStatusColor(donation.status)} capitalize`}
+                        >
+                          {donation.status}
+                        </Badge>
                       </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center text-sm text-gray-600 space-x-4">
+                            <span className="flex items-center">
+                              {getCategoryIcon(donation.category)}
+                              <span className="ml-1">{donation.category}</span>
+                            </span>
+                            <span>Quantity: {donation.quantity}</span>
+                          </div>
+                          
+                          <div className="flex items-center text-sm text-gray-500">
+                            <Clock className="w-4 h-4 mr-1" />
+                            {formatDate(donation.createdAt)}
+                          </div>
+                        </div>
 
-                      <div className="space-y-2 text-sm text-gray-600">
-                        <p><span className="font-medium">Donor:</span> {donation.donorName}</p>
-                        <p><span className="font-medium">Location:</span> {donation.location}</p>
-                        <p><span className="font-medium">Recipient:</span> {donation.recipientOrg}</p>
+                        <div className="space-y-2 text-sm text-gray-600">
+                          <p><span className="font-medium">Donor:</span> {donation.donorName}</p>
+                          <p><span className="font-medium">Location:</span> {donation.location}</p>
+                          <p><span className="font-medium">Recipient:</span> {donation.recipientOrg}</p>
+                        </div>
                       </div>
                     </div>
+
+                    {donation.status === 'pending' && (
+                      <div className="flex space-x-2 ml-4">
+                        <button 
+                          onClick={() => openConfirmDialog(donation.id, 'received')}
+                          className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
+                          title="Accept donation"
+                        >
+                          <Check className="w-5 h-5" />
+                        </button>
+                        <button 
+                          onClick={() => openConfirmDialog(donation.id, 'rejected')}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                          title="Reject donation"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
-
-                  {donation.status === 'pending' && (
-                    <div className="flex space-x-2 ml-4">
-                      <button 
-                        onClick={() => openConfirmDialog(donation.id, 'received')}
-                        className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
-                        title="Accept donation"
-                      >
-                        <Check className="w-5 h-5" />
-                      </button>
-                      <button 
-                        onClick={() => openConfirmDialog(donation.id, 'rejected')}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                        title="Reject donation"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                    </div>
-                  )}
                 </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-600 text-center py-8">
-              No donations available in this category.
-            </p>
-          )}
+              ))
+            ) : (
+              <p className="text-gray-600 text-center py-8">
+                No donations available in this category.
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -254,4 +258,3 @@ const ReceiverDashboard = () => {
 };
 
 export default ReceiverDashboard;
-
