@@ -1,30 +1,81 @@
 
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Heart, Users, ArrowLeft } from "lucide-react";
+import { Heart, Users, ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { signIn, signUp } from "@/lib/auth";
+import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const Auth = () => {
   const { type } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isAuthenticated, userType } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    firstName: "",
+    lastName: "",
+    phone: "",
+  });
   
   const isDonor = type === "donor";
   const title = isDonor ? "Donor" : "Receiver";
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Mock authentication - in a real app this would validate credentials
-    toast({
-      title: "Success!",
-      description: `${isLogin ? "Logged in" : "Signed up"} successfully as a ${title.toLowerCase()}.`
-    });
-
-    if (isDonor) {
+  // Redirect if already authenticated
+  if (isAuthenticated) {
+    if (userType === "donor") {
       navigate("/donor/dashboard");
-    } else {
+    } else if (userType === "receiver") {
       navigate("/receiver/dashboard");
+    }
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      if (isLogin) {
+        await signIn({ 
+          email: formData.email, 
+          password: formData.password 
+        });
+      } else {
+        await signUp({
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          userType: isDonor ? "donor" : "receiver"
+        });
+        
+        toast({
+          title: "Account created",
+          description: "Please check your email to confirm your account.",
+        });
+      }
+      
+      // Navigation will be handled by the auth state change in AuthContext
+    } catch (error: any) {
+      console.error("Authentication error:", error);
+      toast({
+        title: "Authentication Error",
+        description: error.message || "An error occurred during authentication.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -61,12 +112,14 @@ const Auth = () => {
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email address
               </label>
-              <input
+              <Input
                 id="email"
                 name="email"
                 type="email"
+                value={formData.email}
+                onChange={handleChange}
                 required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-opacity-50 focus:border-opacity-0 focus:ring-offset-0"
+                className="mt-1"
               />
             </div>
 
@@ -74,41 +127,85 @@ const Auth = () => {
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
               </label>
-              <input
+              <Input
                 id="password"
                 name="password"
                 type="password"
+                value={formData.password}
+                onChange={handleChange}
                 required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-opacity-50 focus:border-opacity-0 focus:ring-offset-0"
+                className="mt-1"
               />
             </div>
 
             {!isLogin && (
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                  Phone Number
-                </label>
-                <input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  required
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-opacity-50 focus:border-opacity-0 focus:ring-offset-0"
-                  placeholder="Enter your phone number"
-                />
-              </div>
+              <>
+                <div>
+                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                    First Name
+                  </label>
+                  <Input
+                    id="firstName"
+                    name="firstName"
+                    type="text"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    required
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                    Last Name
+                  </label>
+                  <Input
+                    id="lastName"
+                    name="lastName"
+                    type="text"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    required
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                    Phone Number
+                  </label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required
+                    className="mt-1"
+                    placeholder="Enter your phone number"
+                  />
+                </div>
+              </>
             )}
 
-            <button
+            <Button
               type="submit"
+              disabled={isLoading}
               className={`w-full py-3 px-4 rounded-lg text-white font-medium transition-colors duration-200 ${
                 isDonor
                   ? "bg-donor-primary hover:bg-donor-hover focus:ring-donor-primary"
                   : "bg-receiver-primary hover:bg-receiver-hover focus:ring-receiver-primary"
               }`}
             >
-              {isLogin ? "Login" : "Sign up"}
-            </button>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {isLogin ? "Logging in..." : "Signing up..."}
+                </>
+              ) : (
+                <>{isLogin ? "Login" : "Sign up"}</>
+              )}
+            </Button>
           </form>
 
           <p className="mt-4 text-center text-sm text-gray-600">

@@ -5,6 +5,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/context/AuthContext";
+import PrivateRoute from "@/components/PrivateRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -18,20 +20,31 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth/:type" element={<Auth />} />
-            <Route path="/donor/dashboard" element={<DonorDashboard />} />
-            <Route path="/receiver/dashboard" element={<ReceiverDashboard />} />
-            <Route path="/add-donation" element={<AddDonation />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth/:type" element={<Auth />} />
+              
+              {/* Protected donor routes */}
+              <Route element={<PrivateRoute userType="donor" />}>
+                <Route path="/donor/dashboard" element={<DonorDashboard />} />
+                <Route path="/add-donation" element={<AddDonation />} />
+              </Route>
+              
+              {/* Protected receiver routes */}
+              <Route element={<PrivateRoute userType="receiver" />}>
+                <Route path="/receiver/dashboard" element={<ReceiverDashboard />} />
+              </Route>
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 };
