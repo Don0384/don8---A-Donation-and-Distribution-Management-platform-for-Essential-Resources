@@ -6,4 +6,15 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://vgavydyeismltdpydego.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnYXZ5ZHllaXNtbHRkcHlkZWdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA2NDQ5MjksImV4cCI6MjA1NjIyMDkyOX0.IaXyEvN-CuL83vOdEGWIV6Uqm4PeX6Q2jfjRlnshp0U";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+// Create a custom Supabase client
+export const supabase = createClient<Database>(
+  SUPABASE_URL, 
+  SUPABASE_PUBLISHABLE_KEY,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    }
+  }
+);

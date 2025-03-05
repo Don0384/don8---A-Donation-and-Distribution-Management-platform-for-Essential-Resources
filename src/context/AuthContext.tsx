@@ -41,11 +41,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Get user type from user metadata
           const type = initialSession.user.user_metadata.user_type as "donor" | "receiver" | undefined;
           setUserType(type || null);
+          
+          // Log authentication status for debugging
+          console.log("Auth initialized with session:", !!initialSession);
+          console.log("User ID:", initialSession.user.id);
+          console.log("User type:", type);
         }
 
         // Set up listener for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (event, currentSession) => {
+            console.log("Auth state changed:", event);
             setSession(currentSession);
             setUser(currentSession?.user || null);
             setLoading(false);
@@ -53,8 +59,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (currentSession?.user) {
               const type = currentSession.user.user_metadata.user_type as "donor" | "receiver" | undefined;
               setUserType(type || null);
+              console.log("User authenticated:", currentSession.user.id);
             } else {
               setUserType(null);
+              console.log("User signed out");
             }
 
             if (event === "SIGNED_OUT") {

@@ -152,14 +152,21 @@ const ReceiverDashboard = () => {
     if (!selectedDonation.action || !user) return;
     
     try {
-      // Update donation status in the database
-      const { error } = await supabase
+      console.log('Updating donation with ID:', selectedDonation.id);
+      console.log('Setting status to:', selectedDonation.action);
+      console.log('Current user ID:', user.id);
+      
+      // Update donation status in the database with explicit user auth
+      const { error, data } = await supabase
         .from('donations')
         .update({ 
           status: selectedDonation.action,
           receiver_id: user.id
         })
-        .eq('id', selectedDonation.id);
+        .eq('id', selectedDonation.id)
+        .select();
+      
+      console.log('Update response:', { error, data });
       
       if (error) throw error;
       
