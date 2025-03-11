@@ -10,7 +10,7 @@ interface AuthContextType {
   user: AuthUser;
   loading: boolean;
   isAuthenticated: boolean;
-  userType: "donor" | "receiver" | null;
+  userType: "donor" | "receiver" | "admin" | null;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<AuthUser>(null);
   const [loading, setLoading] = useState(true);
-  const [userType, setUserType] = useState<"donor" | "receiver" | null>(null);
+  const [userType, setUserType] = useState<"donor" | "receiver" | "admin" | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         if (initialSession?.user) {
           // Get user type from user metadata
-          const type = initialSession.user.user_metadata.user_type as "donor" | "receiver" | undefined;
+          const type = initialSession.user.user_metadata.user_type as "donor" | "receiver" | "admin" | undefined;
           setUserType(type || null);
           
           // Log authentication status for debugging
@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
             
             if (currentSession?.user) {
-              const type = currentSession.user.user_metadata.user_type as "donor" | "receiver" | undefined;
+              const type = currentSession.user.user_metadata.user_type as "donor" | "receiver" | "admin" | undefined;
               setUserType(type || null);
               console.log("User authenticated:", currentSession.user.id);
             } else {

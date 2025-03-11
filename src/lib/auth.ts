@@ -27,7 +27,7 @@ export async function signUp({
   firstName?: string;
   lastName?: string;
   phone?: string;
-  userType: "donor" | "receiver";
+  userType: "donor" | "receiver" | "admin";
 }) {
   const { data, error } = await supabase.auth.signUp({
     email,

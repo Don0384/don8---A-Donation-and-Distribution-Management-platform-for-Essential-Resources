@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
 
 interface PrivateRouteProps {
-  userType?: "donor" | "receiver";
+  userType?: "donor" | "receiver" | "admin";
 }
 
 const PrivateRoute = ({ userType }: PrivateRouteProps) => {
@@ -31,6 +31,8 @@ const PrivateRoute = ({ userType }: PrivateRouteProps) => {
       return <Navigate to="/donor/dashboard" replace />;
     } else if (authUserType === "receiver") {
       return <Navigate to="/receiver/dashboard" replace />;
+    } else if (authUserType === "admin") {
+      return <Navigate to="/admin/dashboard" replace />;
     }
     
     // Fallback redirect if user type is unknown

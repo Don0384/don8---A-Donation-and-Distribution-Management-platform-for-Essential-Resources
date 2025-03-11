@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { signOut } from "@/lib/auth";
-import { Heart, Users, LogOut, User } from "lucide-react";
+import { Heart, Users, LogOut, User, LayoutDashboard } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +52,17 @@ const Navbar = () => {
                   >
                     <Users className="w-4 h-4 mr-2" />
                     Dashboard
+                  </Button>
+                )}
+                
+                {userType === "admin" && (
+                  <Button
+                    variant="ghost"
+                    className="text-gray-700"
+                    onClick={() => navigate("/admin/dashboard")}
+                  >
+                    <LayoutDashboard className="w-4 h-4 mr-2" />
+                    Admin Dashboard
                   </Button>
                 )}
                 

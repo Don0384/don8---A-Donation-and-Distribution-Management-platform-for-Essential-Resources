@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Heart, Users, ArrowLeft, Loader2 } from "lucide-react";
+import { Heart, Users, ArrowLeft, Loader2, Key } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { signIn, signUp } from "@/lib/auth";
 import { useAuth } from "@/context/AuthContext";
@@ -15,6 +15,7 @@ const Auth = () => {
   const { isAuthenticated, userType } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -24,7 +25,11 @@ const Auth = () => {
   });
   
   const isDonor = type === "donor";
-  const title = isDonor ? "Donor" : "Receiver";
+  let title = isDonor ? "Donor" : "Receiver";
+  
+  if (isAdmin) {
+    title = "Admin";
+  }
 
   // Redirect if already authenticated
   if (isAuthenticated) {
@@ -32,12 +37,18 @@ const Auth = () => {
       navigate("/donor/dashboard");
     } else if (userType === "receiver") {
       navigate("/receiver/dashboard");
+    } else if (userType === "admin") {
+      navigate("/admin/dashboard");
     }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const toggleAdminMode = () => {
+    setIsAdmin(!isAdmin);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,7 +68,7 @@ const Auth = () => {
           firstName: formData.firstName,
           lastName: formData.lastName,
           phone: formData.phone,
-          userType: isDonor ? "donor" : "receiver"
+          userType: isAdmin ? "admin" : (isDonor ? "donor" : "receiver")
         });
         
         toast({
@@ -81,20 +92,36 @@ const Auth = () => {
   
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <button
-        onClick={() => navigate("/")}
-        className="flex items-center text-gray-600 hover:text-gray-800 transition-colors mb-8"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to home
-      </button>
+      <div className="flex justify-between items-center mb-8">
+        <button
+          onClick={() => navigate("/")}
+          className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to home
+        </button>
+        
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={toggleAdminMode}
+          className="text-gray-600 hover:text-gray-800"
+          title="Admin Login"
+        >
+          <Key className="h-4 w-4" />
+        </Button>
+      </div>
       
       <div className="max-w-md mx-auto">
         <div className="text-center">
           <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center ${
-            isDonor ? "bg-donor-primary/10" : "bg-receiver-primary/10"
+            isAdmin 
+              ? "bg-gray-200" 
+              : (isDonor ? "bg-donor-primary/10" : "bg-receiver-primary/10")
           }`}>
-            {isDonor ? (
+            {isAdmin ? (
+              <Key className="w-10 h-10 text-gray-700" />
+            ) : isDonor ? (
               <Heart className="w-10 h-10 text-donor-primary" />
             ) : (
               <Users className="w-10 h-10 text-receiver-primary" />
@@ -192,9 +219,11 @@ const Auth = () => {
               type="submit"
               disabled={isLoading}
               className={`w-full py-3 px-4 rounded-lg text-white font-medium transition-colors duration-200 ${
-                isDonor
-                  ? "bg-donor-primary hover:bg-donor-hover focus:ring-donor-primary"
-                  : "bg-receiver-primary hover:bg-receiver-hover focus:ring-receiver-primary"
+                isAdmin
+                  ? "bg-gray-800 hover:bg-gray-900 focus:ring-gray-800"
+                  : isDonor
+                    ? "bg-donor-primary hover:bg-donor-hover focus:ring-donor-primary"
+                    : "bg-receiver-primary hover:bg-receiver-hover focus:ring-receiver-primary"
               }`}
             >
               {isLoading ? (
@@ -213,7 +242,9 @@ const Auth = () => {
             <button
               onClick={() => setIsLogin(!isLogin)}
               className={`font-medium ${
-                isDonor ? "text-donor-primary" : "text-receiver-primary"
+                isAdmin
+                  ? "text-gray-800"
+                  : isDonor ? "text-donor-primary" : "text-receiver-primary"
               } hover:underline`}
             >
               {isLogin ? "Sign up" : "Login"}
