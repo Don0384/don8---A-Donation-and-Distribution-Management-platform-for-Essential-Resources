@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -16,7 +15,6 @@ const Auth = () => {
   const { isAuthenticated, userType } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -26,11 +24,8 @@ const Auth = () => {
   });
   
   const isDonor = type === "donor";
-  let title = isDonor ? "Donor" : "Receiver";
-  
-  if (isAdmin) {
-    title = "Admin";
-  }
+  const isAdmin = type === "admin";
+  let title = isDonor ? "Donor" : isAdmin ? "Admin" : "Receiver";
 
   // Redirect if already authenticated
   if (isAuthenticated) {
@@ -46,10 +41,6 @@ const Auth = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const toggleAdminMode = () => {
-    setIsAdmin(!isAdmin);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,7 +84,7 @@ const Auth = () => {
   
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <AuthHeader isAdmin={isAdmin} toggleAdminMode={toggleAdminMode} />
+      <AuthHeader />
       
       <div className="max-w-md mx-auto">
         <div className="text-center">

@@ -7,7 +7,7 @@ const Index = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
       <div className="flex-1 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl">
             Welcome to Don8
           </h1>
@@ -15,7 +15,7 @@ const Index = () => {
             Join our community of generous donors and deserving receivers. Make a difference in someone's life today.
           </p>
           
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8 justify-items-center">
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 justify-items-center">
             <UserTypeCard
               type="donor"
               title="Donor"
@@ -25,6 +25,11 @@ const Index = () => {
               type="receiver"
               title="Receiver"
               description="Connect with donors and receive support for your cause or needs."
+            />
+            <UserTypeCard
+              type="admin"
+              title="Admin"
+              description="Manage and oversee donations, users, and platform activities."
             />
           </div>
         </div>
