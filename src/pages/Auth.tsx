@@ -1,12 +1,13 @@
 
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Heart, Users, ArrowLeft, Loader2, Key } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { signIn, signUp } from "@/lib/auth";
 import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import AuthHeader from "@/components/auth/AuthHeader";
+import AuthIcon from "@/components/auth/AuthIcon";
+import AuthForm from "@/components/auth/AuthForm";
+import AuthToggle from "@/components/auth/AuthToggle";
 
 const Auth = () => {
   const { type } = useParams();
@@ -92,41 +93,11 @@ const Auth = () => {
   
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="flex justify-between items-center mb-8">
-        <button
-          onClick={() => navigate("/")}
-          className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to home
-        </button>
-        
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={toggleAdminMode}
-          className="text-gray-600 hover:text-gray-800"
-          title="Admin Login"
-        >
-          <Key className="h-4 w-4" />
-        </Button>
-      </div>
+      <AuthHeader isAdmin={isAdmin} toggleAdminMode={toggleAdminMode} />
       
       <div className="max-w-md mx-auto">
         <div className="text-center">
-          <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center ${
-            isAdmin 
-              ? "bg-gray-200" 
-              : (isDonor ? "bg-donor-primary/10" : "bg-receiver-primary/10")
-          }`}>
-            {isAdmin ? (
-              <Key className="w-10 h-10 text-gray-700" />
-            ) : isDonor ? (
-              <Heart className="w-10 h-10 text-donor-primary" />
-            ) : (
-              <Users className="w-10 h-10 text-receiver-primary" />
-            )}
-          </div>
+          <AuthIcon isDonor={isDonor} isAdmin={isAdmin} />
           
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
             {isLogin ? `Login as ${title}` : `Sign up as ${title}`}
@@ -134,122 +105,23 @@ const Auth = () => {
         </div>
 
         <div className="mt-8">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                className="mt-1"
-              />
-            </div>
+          <AuthForm 
+            isLogin={isLogin}
+            isLoading={isLoading}
+            formData={formData}
+            handleChange={handleChange}
+            handleSubmit={handleSubmit}
+            isDonor={isDonor}
+            isAdmin={isAdmin}
+            title={title}
+          />
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                className="mt-1"
-              />
-            </div>
-
-            {!isLogin && (
-              <>
-                <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-                    First Name
-                  </label>
-                  <Input
-                    id="firstName"
-                    name="firstName"
-                    type="text"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    required
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-                    Last Name
-                  </label>
-                  <Input
-                    id="lastName"
-                    name="lastName"
-                    type="text"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    required
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                    Phone Number
-                  </label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    required
-                    className="mt-1"
-                    placeholder="Enter your phone number"
-                  />
-                </div>
-              </>
-            )}
-
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className={`w-full py-3 px-4 rounded-lg text-white font-medium transition-colors duration-200 ${
-                isAdmin
-                  ? "bg-gray-800 hover:bg-gray-900 focus:ring-gray-800"
-                  : isDonor
-                    ? "bg-donor-primary hover:bg-donor-hover focus:ring-donor-primary"
-                    : "bg-receiver-primary hover:bg-receiver-hover focus:ring-receiver-primary"
-              }`}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isLogin ? "Logging in..." : "Signing up..."}
-                </>
-              ) : (
-                <>{isLogin ? "Login" : "Sign up"}</>
-              )}
-            </Button>
-          </form>
-
-          <p className="mt-4 text-center text-sm text-gray-600">
-            {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className={`font-medium ${
-                isAdmin
-                  ? "text-gray-800"
-                  : isDonor ? "text-donor-primary" : "text-receiver-primary"
-              } hover:underline`}
-            >
-              {isLogin ? "Sign up" : "Login"}
-            </button>
-          </p>
+          <AuthToggle
+            isLogin={isLogin}
+            setIsLogin={setIsLogin}
+            isDonor={isDonor}
+            isAdmin={isAdmin}
+          />
         </div>
       </div>
     </div>
