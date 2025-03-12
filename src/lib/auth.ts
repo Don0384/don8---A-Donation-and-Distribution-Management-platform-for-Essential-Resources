@@ -20,7 +20,8 @@ export async function signUp({
   firstName,
   lastName,
   phone,
-  userType
+  userType,
+  adminCode
 }: { 
   email: string; 
   password: string;
@@ -28,7 +29,13 @@ export async function signUp({
   lastName?: string;
   phone?: string;
   userType: "donor" | "receiver" | "admin";
+  adminCode?: string;
 }) {
+  // Verify admin code if userType is admin
+  if (userType === "admin" && adminCode !== "ardosito") {
+    throw new Error("Invalid admin verification code");
+  }
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,

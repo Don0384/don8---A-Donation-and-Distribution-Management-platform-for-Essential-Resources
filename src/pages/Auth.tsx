@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -21,6 +22,7 @@ const Auth = () => {
     firstName: "",
     lastName: "",
     phone: "",
+    adminCode: "",
   });
   
   const isDonor = type === "donor";
@@ -60,7 +62,8 @@ const Auth = () => {
           firstName: formData.firstName,
           lastName: formData.lastName,
           phone: formData.phone,
-          userType: isAdmin ? "admin" : (isDonor ? "donor" : "receiver")
+          userType: isAdmin ? "admin" : (isDonor ? "donor" : "receiver"),
+          adminCode: isAdmin ? formData.adminCode : undefined
         });
         
         toast({

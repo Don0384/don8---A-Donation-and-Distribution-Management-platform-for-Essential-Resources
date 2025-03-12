@@ -13,6 +13,7 @@ interface AuthFormProps {
     firstName: string;
     lastName: string;
     phone: string;
+    adminCode?: string;
   };
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSubmit: (e: React.FormEvent) => void;
@@ -110,6 +111,25 @@ const AuthForm = ({
               placeholder="Enter your phone number"
             />
           </div>
+
+          {/* Admin verification code field - only shown for admin signup */}
+          {isAdmin && (
+            <div>
+              <label htmlFor="adminCode" className="block text-sm font-medium text-gray-700">
+                Admin Verification Code
+              </label>
+              <Input
+                id="adminCode"
+                name="adminCode"
+                type="password"
+                value={formData.adminCode || ""}
+                onChange={handleChange}
+                required
+                className="mt-1"
+                placeholder="Enter admin verification code"
+              />
+            </div>
+          )}
         </>
       )}
 
