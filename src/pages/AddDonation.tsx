@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
+import { DonationConfirmDialog } from "@/components/donations/DonationConfirmDialog";
 
 const AddDonation = () => {
   const navigate = useNavigate();
@@ -29,10 +29,14 @@ const AddDonation = () => {
     category: "",
     location: ""
   });
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmDonation = async (expiryTime?: string) => {
     if (!user) {
       toast({
         title: "Error",
@@ -45,29 +49,29 @@ const AddDonation = () => {
     setIsSubmitting(true);
     
     try {
-      // Insert donation into the database
+      const donationData = {
+        donor_id: user.id,
+        item_name: formData.itemName,
+        description: formData.description || null,
+        quantity: formData.quantity,
+        category: formData.category,
+        location: formData.location,
+        status: 'pending',
+        expiry_time: expiryTime ? new Date(Date.now() + parseTimeToMilliseconds(expiryTime)).toISOString() : null
+      };
+
       const { data, error } = await supabase
         .from('donations')
-        .insert({
-          donor_id: user.id,
-          item_name: formData.itemName,
-          description: formData.description || null,
-          quantity: formData.quantity,
-          category: formData.category,
-          location: formData.location,
-          status: 'pending'
-        })
+        .insert(donationData)
         .select();
       
       if (error) throw error;
       
-      // Show success toast
       toast({
         title: "Success!",
         description: "Your donation has been submitted successfully.",
       });
 
-      // Navigate back to dashboard after a short delay
       setTimeout(() => {
         navigate("/donor/dashboard");
       }, 1500);
@@ -80,6 +84,7 @@ const AddDonation = () => {
       });
     } finally {
       setIsSubmitting(false);
+      setShowConfirmDialog(false);
     }
   };
 
@@ -90,6 +95,11 @@ const AddDonation = () => {
 
   const handleCategoryChange = (value: string) => {
     setFormData(prev => ({ ...prev, category: value }));
+  };
+
+  const parseTimeToMilliseconds = (time: string): number => {
+    const [hours, minutes, seconds] = time.split(':').map(Number);
+    return ((hours * 60 + minutes) * 60 + seconds) * 1000;
   };
 
   return (
@@ -201,6 +211,14 @@ const AddDonation = () => {
               )}
             </Button>
           </form>
+
+          <DonationConfirmDialog
+            isOpen={showConfirmDialog}
+            onClose={() => setShowConfirmDialog(false)}
+            onConfirm={handleConfirmDonation}
+            itemName={formData.itemName}
+            isFood={formData.category === "food"}
+          />
         </div>
       </div>
     </div>
