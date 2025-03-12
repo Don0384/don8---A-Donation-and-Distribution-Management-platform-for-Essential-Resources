@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,8 @@ const AddDonation = () => {
         status: 'pending',
         expiry_time: expiryTime ? new Date(Date.now() + parseTimeToMilliseconds(expiryTime)).toISOString() : null
       };
+
+      console.log("Submitting donation with data:", donationData);
 
       const { data, error } = await supabase
         .from('donations')

@@ -15,6 +15,7 @@ export type Database = {
           created_at: string
           description: string | null
           donor_id: string
+          expiry_time: string | null
           id: number
           item_name: string
           location: string
@@ -27,6 +28,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           donor_id: string
+          expiry_time?: string | null
           id?: number
           item_name: string
           location: string
@@ -39,6 +41,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           donor_id?: string
+          expiry_time?: string | null
           id?: number
           item_name?: string
           location?: string
