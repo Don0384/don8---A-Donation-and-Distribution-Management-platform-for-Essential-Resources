@@ -1,4 +1,3 @@
-
 import { Clock, Package, Check, X, Filter, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -35,6 +34,7 @@ type Donation = {
   created_at: string;
   location: string;
   receiver_id: string | null;
+  expiry_time: string | null;
 };
 
 const categories = [
@@ -74,8 +74,7 @@ const ReceiverDashboard = () => {
     id: number;
     action: 'received' | 'rejected' | null;
   }>({ id: 0, action: null });
-  
-  // Fetch donations
+
   useEffect(() => {
     if (!user) return;
     
@@ -88,12 +87,10 @@ const ReceiverDashboard = () => {
           .select('*')
           .order('created_at', { ascending: false });
         
-        // If we're not viewing "All" statuses, filter by status
         if (selectedStatus !== "All") {
           query = query.eq('status', selectedStatus);
         }
         
-        // For received/rejected donations, only show those handled by this receiver
         if (selectedStatus === 'received' || selectedStatus === 'rejected') {
           query = query.eq('receiver_id', user.id);
         }
@@ -112,7 +109,7 @@ const ReceiverDashboard = () => {
 
     fetchDonations();
   }, [selectedStatus, user]);
-  
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'received':
@@ -156,7 +153,6 @@ const ReceiverDashboard = () => {
       console.log('Setting status to:', selectedDonation.action);
       console.log('Current user ID:', user.id);
       
-      // Update donation status in the database with explicit user auth
       const { error, data } = await supabase
         .from('donations')
         .update({ 
@@ -170,7 +166,6 @@ const ReceiverDashboard = () => {
       
       if (error) throw error;
       
-      // Update local state - show the updated donation with new status if we're not filtering for just pending
       if (selectedStatus === 'All') {
         setDonations(prev => 
           prev.map(donation => 
@@ -180,7 +175,6 @@ const ReceiverDashboard = () => {
           )
         );
       } else if (selectedStatus === 'pending') {
-        // If we're viewing only pending, remove this donation from the list
         setDonations(prev => 
           prev.filter(donation => donation.id !== selectedDonation.id)
         );
@@ -192,7 +186,6 @@ const ReceiverDashboard = () => {
         variant: selectedDonation.action === 'received' ? 'default' : 'destructive',
       });
       
-      // Fetch donations again to ensure UI is up to date
       if (selectedStatus === selectedDonation.action) {
         setTimeout(() => {
           fetchDonationsAfterStatusChange();
@@ -211,7 +204,6 @@ const ReceiverDashboard = () => {
     }
   };
 
-  // Helper function to fetch donations after a status change
   const fetchDonationsAfterStatusChange = async () => {
     if (!user) return;
     
@@ -223,12 +215,10 @@ const ReceiverDashboard = () => {
         .select('*')
         .order('created_at', { ascending: false });
       
-      // If we're not viewing "All" statuses, filter by status
       if (selectedStatus !== "All") {
         query = query.eq('status', selectedStatus);
       }
       
-      // For received/rejected donations, only show those handled by this receiver
       if (selectedStatus === 'received' || selectedStatus === 'rejected') {
         query = query.eq('receiver_id', user.id);
       }
@@ -242,6 +232,25 @@ const ReceiverDashboard = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const formatTimeRemaining = (expiryTime: string | null) => {
+    if (!expiryTime) return null;
+    
+    const expiry = new Date(expiryTime);
+    const now = new Date();
+    
+    if (expiry <= now) {
+      return "Expired";
+    }
+    
+    const diff = expiry.getTime() - now.getTime();
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
   const filteredDonations = donations.filter(donation => 
@@ -372,6 +381,20 @@ const ReceiverDashboard = () => {
 
                           <div className="space-y-2 text-sm text-gray-600">
                             <p><span className="font-medium">Location:</span> {donation.location}</p>
+                            
+                            {donation.category === 'food' && donation.expiry_time && (
+                              <div className="mt-2">
+                                <div className="flex items-center text-sm font-medium">
+                                  <Clock className="w-4 h-4 text-amber-500 mr-1" />
+                                  <span className="text-amber-700">
+                                    Freshness timer: {formatTimeRemaining(donation.expiry_time) || 'Expired'}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  This food item will remain fresh until {new Date(donation.expiry_time).toLocaleString()}
+                                </p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
