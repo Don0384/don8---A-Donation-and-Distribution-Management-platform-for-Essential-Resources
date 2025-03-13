@@ -39,21 +39,22 @@ export function DonationConfirmDialog({
     onConfirm(isFood ? expiryTime : undefined);
   };
 
-  const validateTimeInput = (value: string) => {
-    // Regular expression to validate HH:MM:SS format (24-hour)
-    const timeRegex = /^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setExpiryTime(value);
     
-    if (value === "") {
-      setExpiryTime("");
-      setTimeError(null);
-      return;
-    }
-    
-    if (timeRegex.test(value)) {
-      setExpiryTime(value);
-      setTimeError(null);
+    // Only validate if there's actual input
+    if (value) {
+      // Regular expression to validate HH:MM:SS format (24-hour)
+      const timeRegex = /^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
+      
+      if (!timeRegex.test(value)) {
+        setTimeError("Please use the format HH:MM:SS (e.g., 02:30:00)");
+      } else {
+        setTimeError(null);
+      }
     } else {
-      setTimeError("Please use the format HH:MM:SS (e.g., 02:30:00)");
+      setTimeError(null);
     }
   };
 
@@ -79,7 +80,7 @@ export function DonationConfirmDialog({
                 type="text"
                 placeholder="HH:MM:SS"
                 value={expiryTime}
-                onChange={(e) => validateTimeInput(e.target.value)}
+                onChange={handleTimeChange}
                 className={`w-full ${timeError ? 'border-red-500' : ''}`}
                 required={isFood}
               />
