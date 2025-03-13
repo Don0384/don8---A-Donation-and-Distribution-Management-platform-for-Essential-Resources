@@ -1,11 +1,12 @@
 
-import { Clock, Package, Plus, Check, X, Loader2 } from "lucide-react";
+import { Clock, Package, Plus, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { formatDate, formatTimeRemaining } from "@/utils/dateUtils";
 
 type Donation = {
   id: number;
@@ -16,6 +17,7 @@ type Donation = {
   created_at: string;
   description: string | null;
   location: string;
+  expiry_time: string | null;
 };
 
 const DonorDashboard = () => {
@@ -24,6 +26,7 @@ const DonorDashboard = () => {
   const [donations, setDonations] = useState<Donation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [timeRemainingMap, setTimeRemainingMap] = useState<Record<number, string | null>>({});
   
   // Fetch donations
   useEffect(() => {
@@ -40,6 +43,15 @@ const DonorDashboard = () => {
         
         if (error) throw error;
         setDonations(data || []);
+        
+        // Initialize time remaining for food items
+        const initialTimeMap: Record<number, string | null> = {};
+        data?.forEach(donation => {
+          if (donation.category === 'food' && donation.expiry_time) {
+            initialTimeMap[donation.id] = formatTimeRemaining(donation.expiry_time);
+          }
+        });
+        setTimeRemainingMap(initialTimeMap);
       } catch (err: any) {
         console.error('Error fetching donations:', err);
         setError(err.message);
@@ -51,6 +63,24 @@ const DonorDashboard = () => {
     fetchDonations();
   }, [user]);
   
+  // Update timers for food items with expiry time
+  useEffect(() => {
+    const foodDonations = donations.filter(d => d.category === 'food' && d.expiry_time);
+    if (foodDonations.length === 0) return;
+    
+    const interval = setInterval(() => {
+      const updatedTimeMap: Record<number, string | null> = {};
+      
+      foodDonations.forEach(donation => {
+        updatedTimeMap[donation.id] = formatTimeRemaining(donation.expiry_time);
+      });
+      
+      setTimeRemainingMap(prev => ({...prev, ...updatedTimeMap}));
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [donations]);
+  
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved':
@@ -61,16 +91,6 @@ const DonorDashboard = () => {
       default:
         return 'bg-yellow-100 text-yellow-800';
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   const getCategoryIcon = (category: string) => {
@@ -141,6 +161,20 @@ const DonorDashboard = () => {
                           <p className="text-sm text-gray-600">
                             <span className="font-medium">Location:</span> {donation.location}
                           </p>
+                          
+                          {donation.category === 'food' && donation.expiry_time && (
+                            <div className="mt-2">
+                              <div className="flex items-center text-sm font-medium">
+                                <Clock className="w-4 h-4 text-amber-500 mr-1" />
+                                <span className="text-amber-700">
+                                  Freshness timer: {timeRemainingMap[donation.id] || 'Expired'}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">
+                                This food item will remain fresh until {new Date(donation.expiry_time).toLocaleString()}
+                              </p>
+                            </div>
+                          )}
                           
                           <div className="flex items-center text-sm text-gray-500">
                             <Clock className="w-4 h-4 mr-1" />
