@@ -22,4 +22,5 @@ export interface DonationWithProfiles {
   receiver_id: string | null;
   donor: DonationUser | null;
   receiver: DonationUser | null;
+  expiry_time: string | null;
 }
