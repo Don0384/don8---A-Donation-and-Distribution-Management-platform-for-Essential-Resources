@@ -3,6 +3,7 @@ import { Clock, Package, Check, X } from "lucide-react";
 import { Donation, categoryDisplayNames } from "@/types/receiverDashboard";
 import { StatusBadge } from "./StatusBadge";
 import { formatDate, formatTimeRemaining } from "@/utils/dateUtils";
+import { useEffect, useState } from "react";
 
 interface DonationItemProps {
   donation: Donation;
@@ -10,6 +11,21 @@ interface DonationItemProps {
 }
 
 export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
+  const [timeRemaining, setTimeRemaining] = useState<string | null>(
+    formatTimeRemaining(donation.expiry_time)
+  );
+
+  // Update timer every second for food items with expiry time
+  useEffect(() => {
+    if (donation.category === 'food' && donation.expiry_time) {
+      const interval = setInterval(() => {
+        setTimeRemaining(formatTimeRemaining(donation.expiry_time));
+      }, 1000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [donation.expiry_time, donation.category]);
+
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'clothes':
@@ -62,7 +78,7 @@ export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
                   <div className="flex items-center text-sm font-medium">
                     <Clock className="w-4 h-4 text-amber-500 mr-1" />
                     <span className="text-amber-700">
-                      Freshness timer: {formatTimeRemaining(donation.expiry_time) || 'Expired'}
+                      Freshness timer: {timeRemaining || 'Expired'}
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
