@@ -53,6 +53,9 @@ const DonationDetails = ({ donations }: DonationDetailsProps) => {
                         <div className="text-xs text-gray-500">
                           {donation.donor.first_name} {donation.donor.last_name}
                         </div>
+                        <div className="text-xs text-gray-500">
+                          {donation.donor.phone || 'No phone'}
+                        </div>
                       </div>
                     ) : (
                       "Unknown"
@@ -64,6 +67,9 @@ const DonationDetails = ({ donations }: DonationDetailsProps) => {
                         <div>{donation.receiver.email}</div>
                         <div className="text-xs text-gray-500">
                           {donation.receiver.first_name} {donation.receiver.last_name}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {donation.receiver.phone || 'No phone'}
                         </div>
                       </div>
                     ) : (

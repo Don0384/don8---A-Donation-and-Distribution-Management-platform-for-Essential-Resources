@@ -50,7 +50,7 @@ const DonationTable = ({ donations, loading }: DonationTableProps) => {
                           {donation.donor.first_name} {donation.donor.last_name}
                         </div>
                         <div className="text-sm text-gray-500">{donation.donor.email}</div>
-                        <div className="text-xs text-gray-500">{donation.donor.phone}</div>
+                        <div className="text-xs text-gray-500">{donation.donor.phone || 'No phone'}</div>
                       </div>
                     ) : (
                       <span className="text-sm text-gray-500">Unknown donor</span>
@@ -63,7 +63,7 @@ const DonationTable = ({ donations, loading }: DonationTableProps) => {
                           {donation.receiver.first_name} {donation.receiver.last_name}
                         </div>
                         <div className="text-sm text-gray-500">{donation.receiver.email}</div>
-                        <div className="text-xs text-gray-500">{donation.receiver.phone}</div>
+                        <div className="text-xs text-gray-500">{donation.receiver.phone || 'No phone'}</div>
                       </div>
                     ) : (
                       <span className="text-sm text-gray-500">No receiver yet</span>
