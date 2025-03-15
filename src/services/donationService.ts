@@ -21,6 +21,10 @@ export const fetchDonationsWithProfiles = async (): Promise<DonationWithProfiles
         // Get donor details
         let donor = null;
         if (donation.donor_id) {
+          // Get user data for email and phone
+          const { data: userData } = await supabase.auth.admin.getUserById(donation.donor_id);
+          
+          // Get profile data for names
           const { data: donorProfile } = await supabase
             .from('profiles')
             .select('*')
@@ -28,8 +32,6 @@ export const fetchDonationsWithProfiles = async (): Promise<DonationWithProfiles
             .single();
             
           if (donorProfile) {
-            // Also get user data from auth for the email
-            const { data: userData } = await supabase.auth.admin.getUserById(donation.donor_id);
             donor = {
               id: donation.donor_id,
               email: userData?.user?.email || "",
@@ -43,6 +45,10 @@ export const fetchDonationsWithProfiles = async (): Promise<DonationWithProfiles
         // Get receiver details
         let receiver = null;
         if (donation.receiver_id) {
+          // Get user data for email and phone
+          const { data: userData } = await supabase.auth.admin.getUserById(donation.receiver_id);
+          
+          // Get profile data for names
           const { data: receiverProfile } = await supabase
             .from('profiles')
             .select('*')
@@ -50,8 +56,6 @@ export const fetchDonationsWithProfiles = async (): Promise<DonationWithProfiles
             .single();
             
           if (receiverProfile) {
-            // Also get user data from auth for the email
-            const { data: userData } = await supabase.auth.admin.getUserById(donation.receiver_id);
             receiver = {
               id: donation.receiver_id,
               email: userData?.user?.email || "",
