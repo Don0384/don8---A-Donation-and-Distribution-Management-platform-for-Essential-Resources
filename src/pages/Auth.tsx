@@ -56,6 +56,11 @@ const Auth = () => {
           password: formData.password 
         });
       } else {
+        // Validate required fields for signup
+        if (!formData.email || !formData.password || !formData.firstName || !formData.lastName || !formData.phone) {
+          throw new Error("All fields are required");
+        }
+        
         await signUp({
           email: formData.email,
           password: formData.password,

@@ -25,12 +25,17 @@ export async function signUp({
 }: { 
   email: string; 
   password: string;
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
   userType: "donor" | "receiver" | "admin";
   adminCode?: string;
 }) {
+  // Validate required fields
+  if (!firstName || !lastName || !phone) {
+    throw new Error("First name, last name, and phone number are required");
+  }
+
   // Verify admin code if userType is admin
   if (userType === "admin" && adminCode !== "ardosito") {
     throw new Error("Invalid admin verification code");

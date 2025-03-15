@@ -36,7 +36,7 @@ const AuthForm = ({
     <form className="space-y-6" onSubmit={handleSubmit}>
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          Email address
+          Email address <span className="text-red-500">*</span>
         </label>
         <Input
           id="email"
@@ -51,7 +51,7 @@ const AuthForm = ({
 
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-          Password
+          Password <span className="text-red-500">*</span>
         </label>
         <Input
           id="password"
@@ -68,7 +68,7 @@ const AuthForm = ({
         <>
           <div>
             <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-              First Name
+              First Name <span className="text-red-500">*</span>
             </label>
             <Input
               id="firstName"
@@ -83,7 +83,7 @@ const AuthForm = ({
           
           <div>
             <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-              Last Name
+              Last Name <span className="text-red-500">*</span>
             </label>
             <Input
               id="lastName"
@@ -98,7 +98,7 @@ const AuthForm = ({
 
           <div>
             <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-              Phone Number
+              Phone Number <span className="text-red-500">*</span>
             </label>
             <Input
               id="phone"
@@ -116,7 +116,7 @@ const AuthForm = ({
           {isAdmin && (
             <div>
               <label htmlFor="adminCode" className="block text-sm font-medium text-gray-700">
-                Admin Verification Code
+                Admin Verification Code <span className="text-red-500">*</span>
               </label>
               <Input
                 id="adminCode"
