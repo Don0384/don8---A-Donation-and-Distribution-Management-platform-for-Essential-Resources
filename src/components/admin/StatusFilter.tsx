@@ -19,7 +19,7 @@ const StatusFilter = ({ value, onValueChange }: StatusFilterProps) => {
         <SelectValue placeholder="All statuses" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="">All statuses</SelectItem>
+        <SelectItem value="all">All statuses</SelectItem>
         <SelectItem value="pending">Pending</SelectItem>
         <SelectItem value="received">Received</SelectItem>
         <SelectItem value="rejected">Rejected</SelectItem>
