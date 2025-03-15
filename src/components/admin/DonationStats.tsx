@@ -2,7 +2,8 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DonationWithProfiles } from "@/types/donations";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { ChartContainer, ChartTooltipContent, ChartTooltip } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
 interface DonationStatsProps {
   donations: DonationWithProfiles[];
@@ -21,7 +22,7 @@ const DonationStats = ({ donations }: DonationStatsProps) => {
     }, {} as Record<string, number>);
     
     const statusData = Object.entries(byStatus).map(([name, value]) => ({
-      name,
+      name: name.charAt(0).toUpperCase() + name.slice(1),
       value
     }));
     
@@ -66,6 +67,11 @@ const DonationStats = ({ donations }: DonationStatsProps) => {
   }, [donations]);
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+  
+  const config = {
+    status: { label: 'Status' },
+    category: { label: 'Category' },
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -96,27 +102,25 @@ const DonationStats = ({ donations }: DonationStatsProps) => {
           <CardTitle className="text-lg">Donations by Status</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[200px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={stats.statusData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {stats.statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => [value, 'Count']} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          <ChartContainer className="h-[200px]" config={config}>
+            <PieChart>
+              <Pie
+                data={stats.statusData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {stats.statusData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <ChartTooltip content={<ChartTooltipContent />} />
+            </PieChart>
+          </ChartContainer>
         </CardContent>
       </Card>
 
@@ -125,28 +129,26 @@ const DonationStats = ({ donations }: DonationStatsProps) => {
           <CardTitle className="text-lg">Donations by Category</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={stats.categoryData}
-                margin={{
-                  top: 20,
-                  right: 30,
-                  left: 20,
-                  bottom: 5,
-                }}
-              >
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="#8884d8">
-                  {stats.categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <ChartContainer className="h-[300px]" config={config}>
+            <BarChart
+              data={stats.categoryData}
+              margin={{
+                top: 20,
+                right: 30,
+                left: 20,
+                bottom: 5,
+              }}
+            >
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip content={<ChartTooltipContent />} />
+              <Bar dataKey="value" fill="#8884d8">
+                {stats.categoryData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ChartContainer>
         </CardContent>
       </Card>
     </div>
