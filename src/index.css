@@ -94,6 +94,10 @@
 
   body {
     @apply bg-background text-foreground font-sans;
+    /* Add stability to prevent blinking */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    backface-visibility: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -104,13 +108,40 @@
 @layer components {
   .card-gradient {
     @apply bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900;
+    /* Add stability properties */
+    transform: translateZ(0);
+    will-change: auto;
   }
   
   .button-gradient {
     @apply bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white;
+    /* Add stability properties */
+    transform: translateZ(0);
   }
   
   .hover-scale {
-    @apply transition-transform duration-200 hover:scale-105;
+    @apply transition-transform duration-300 hover:scale-105;
+    /* Smoother transition */
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Add a smoothing class for animations */
+  .smooth-transition {
+    @apply transition-all duration-300;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: auto;
+    transform: translateZ(0);
   }
 }
+
+/* Fix for potential animation blinking */
+.animate-fade-in, 
+.animate-scale-in {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Remove unused styles from App.css */

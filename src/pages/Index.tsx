@@ -28,7 +28,10 @@ const Index = () => {
               className="text-5xl font-bold font-heading bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent sm:text-6xl"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+              transition={{ 
+                duration: 0.5, 
+                ease: [0.4, 0, 0.2, 1] 
+              }}
             >
               Welcome to Don8
             </motion.h1>
@@ -36,7 +39,11 @@ const Index = () => {
               className="mt-6 text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
+              transition={{ 
+                duration: 0.5, 
+                delay: 0.2,
+                ease: "easeOut" 
+              }}
             >
               Join our community of generous donors and deserving receivers. Make a difference in someone's life today.
             </motion.p>
@@ -45,7 +52,11 @@ const Index = () => {
               className="mt-8 flex justify-center"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
+              transition={{ 
+                duration: 0.5, 
+                delay: 0.3,
+                ease: "easeOut" 
+              }}
             >
               <a href="#options" className="flex flex-col items-center text-gray-500 hover:text-indigo-600 transition-colors">
                 <span className="text-sm mb-2">Explore Options</span>

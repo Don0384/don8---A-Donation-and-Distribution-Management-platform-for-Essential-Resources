@@ -19,7 +19,11 @@ const UserTypeCard = ({ type, title, description }: UserTypeCardProps) => {
       whileHover={{ y: -5 }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ 
+        duration: 0.4, 
+        ease: [0.4, 0, 0.2, 1],
+        opacity: { duration: 0.5 }
+      }}
     >
       <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center ${
         isAdmin ? "bg-gray-200 dark:bg-gray-700" :
@@ -46,7 +50,7 @@ const UserTypeCard = ({ type, title, description }: UserTypeCardProps) => {
       
       <Link
         to={`/auth/${type}`}
-        className={`mt-8 w-full block py-3 px-4 rounded-lg text-center text-white font-medium transition-colors duration-200 ${
+        className={`mt-8 w-full block py-3 px-4 rounded-lg text-center text-white font-medium transition-colors duration-300 ${
           isAdmin
             ? "bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600"
             : isDonor
