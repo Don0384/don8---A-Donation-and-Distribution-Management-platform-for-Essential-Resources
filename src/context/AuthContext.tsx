@@ -4,7 +4,6 @@ import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthUser, getSession } from "@/lib/auth";
 import { useToast } from "@/components/ui/use-toast";
-import { useNavigate } from "react-router-dom";
 
 interface AuthContextType {
   session: Session | null;
@@ -42,45 +41,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Get user type from user metadata
           const type = initialSession.user.user_metadata.user_type as "donor" | "receiver" | "admin" | undefined;
           setUserType(type || null);
-          
-          // Log authentication status for debugging
           console.log("Auth initialized with session:", !!initialSession);
-          console.log("User ID:", initialSession.user.id);
-          console.log("User type:", type);
         }
 
         // Set up listener for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (event, currentSession) => {
             console.log("Auth state changed:", event);
-            setSession(currentSession);
-            setUser(currentSession?.user || null);
             
-            if (currentSession?.user) {
-              const type = currentSession.user.user_metadata.user_type as "donor" | "receiver" | "admin" | undefined;
-              setUserType(type || null);
-              console.log("User authenticated:", currentSession.user.id);
-            } else {
-              setUserType(null);
-              console.log("User signed out");
+            // Only update state if there's a real change to avoid unnecessary renders
+            if (event !== 'INITIAL_SESSION') {
+              setSession(currentSession);
+              setUser(currentSession?.user || null);
               
-              // Redirect to home page on sign out
-              window.location.href = "/";
+              if (currentSession?.user) {
+                const type = currentSession.user.user_metadata.user_type as "donor" | "receiver" | "admin" | undefined;
+                setUserType(type || null);
+                
+                if (event === "SIGNED_IN") {
+                  toast({
+                    title: "Signed in",
+                    description: "Welcome back!",
+                  });
+                }
+              } else {
+                setUserType(null);
+                
+                if (event === "SIGNED_OUT") {
+                  toast({
+                    title: "Signed out",
+                    description: "You have been signed out successfully.",
+                  });
+                }
+              }
             }
-
-            if (event === "SIGNED_OUT") {
-              toast({
-                title: "Signed out",
-                description: "You have been signed out successfully.",
-              });
-            } else if (event === "SIGNED_IN") {
-              toast({
-                title: "Signed in",
-                description: "Welcome back!",
-              });
-            }
-            
-            setLoading(false);
           }
         );
 
