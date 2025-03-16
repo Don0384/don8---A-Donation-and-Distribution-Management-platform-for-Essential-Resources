@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 
@@ -59,8 +58,18 @@ export async function signUp({
 }
 
 export async function signOut() {
-  const { error } = await supabase.auth.signOut();
-  if (error) throw error;
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Error during sign out:", error);
+      throw error;
+    }
+    console.log("Successfully signed out");
+    return { success: true };
+  } catch (error) {
+    console.error("Exception during sign out:", error);
+    throw error;
+  }
 }
 
 export async function getSession(): Promise<Session | null> {

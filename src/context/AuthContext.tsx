@@ -4,6 +4,7 @@ import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthUser, getSession } from "@/lib/auth";
 import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface AuthContextType {
   session: Session | null;
@@ -54,7 +55,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.log("Auth state changed:", event);
             setSession(currentSession);
             setUser(currentSession?.user || null);
-            setLoading(false);
             
             if (currentSession?.user) {
               const type = currentSession.user.user_metadata.user_type as "donor" | "receiver" | "admin" | undefined;
@@ -63,6 +63,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             } else {
               setUserType(null);
               console.log("User signed out");
+              
+              // Redirect to home page on sign out
+              window.location.href = "/";
             }
 
             if (event === "SIGNED_OUT") {
@@ -76,6 +79,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 description: "Welcome back!",
               });
             }
+            
+            setLoading(false);
           }
         );
 

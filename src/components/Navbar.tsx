@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { signOut } from "@/lib/auth";
 import { Heart, Users, LogOut, User, LayoutDashboard } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,10 +15,21 @@ import {
 const Navbar = () => {
   const { isAuthenticated, userType } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleLogout = async () => {
-    await signOut();
-    navigate("/");
+    try {
+      await signOut();
+      // The navigation and toast will be handled by the auth state change in AuthContext
+      console.log("Logout initiated");
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
