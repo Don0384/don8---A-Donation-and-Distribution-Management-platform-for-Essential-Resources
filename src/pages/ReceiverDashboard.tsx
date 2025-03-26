@@ -6,15 +6,18 @@ import { FilterControls } from "@/components/receiver/FilterControls";
 import { DonationsList } from "@/components/receiver/DonationsList";
 import { DonationConfirmationDialog } from "@/components/receiver/DonationConfirmationDialog";
 import { useReceiverDonations } from "@/hooks/useReceiverDonations";
+import { useNavigate } from "react-router-dom";
+import { Edit } from "lucide-react";
 
 const ReceiverDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedDonation, setSelectedDonation] = useState<{
     id: number;
-    action: 'received' | 'rejected' | null;
+    action: 'received' | null;
   }>({ id: 0, action: null });
 
   const {
@@ -32,7 +35,7 @@ const ReceiverDashboard = () => {
   }, [selectedStatus, user]);
 
   const openConfirmDialog = (donationId: number, action: 'received' | 'rejected') => {
-    setSelectedDonation({ id: donationId, action });
+    setSelectedDonation({ id: donationId, action: 'received' });
     setDialogOpen(true);
   };
 
@@ -94,12 +97,22 @@ const ReceiverDashboard = () => {
               {getStatusTitle(selectedStatus)}
             </h1>
             
-            <FilterControls
-              selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
-              selectedStatus={selectedStatus}
-              setSelectedStatus={setSelectedStatus}
-            />
+            <div className="flex items-center gap-4">
+              <FilterControls
+                selectedCategory={selectedCategory}
+                setSelectedCategory={setSelectedCategory}
+                selectedStatus={selectedStatus}
+                setSelectedStatus={setSelectedStatus}
+              />
+              
+              <button
+                onClick={() => navigate("/receiver/message")}
+                className="bg-receiver-primary hover:bg-receiver-hover text-white p-2 rounded-full flex items-center justify-center shadow-sm transition-colors"
+                aria-label="Write message"
+              >
+                <Edit className="w-5 h-5" />
+              </button>
+            </div>
           </div>
           
           <DonationsList

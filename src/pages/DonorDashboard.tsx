@@ -1,5 +1,5 @@
 
-import { Clock, Package, Plus, Loader2 } from "lucide-react";
+import { Clock, Package, Plus, Loader2, Inbox } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
@@ -108,7 +108,17 @@ const DonorDashboard = () => {
       <Navbar />
       <div className="flex-1 p-4">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">My Donations</h1>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold text-gray-900">My Donations</h1>
+            
+            <button
+              onClick={() => navigate("/donor/inbox")}
+              className="bg-donor-primary hover:bg-donor-hover text-white p-2 rounded-full flex items-center justify-center shadow-sm transition-colors"
+              aria-label="View inbox"
+            >
+              <Inbox className="w-5 h-5" />
+            </button>
+          </div>
           
           {isLoading ? (
             <div className="flex justify-center items-center py-12">

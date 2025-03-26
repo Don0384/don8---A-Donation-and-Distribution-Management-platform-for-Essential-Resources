@@ -14,7 +14,7 @@ interface DonationConfirmationDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
-  action: 'received' | 'rejected' | null;
+  action: 'received' | null;
 }
 
 export const DonationConfirmationDialog = ({
@@ -27,11 +27,9 @@ export const DonationConfirmationDialog = ({
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>
-            {action === 'received' ? 'Accept Donation' : 'Reject Donation'}
-          </AlertDialogTitle>
+          <AlertDialogTitle>Accept Donation</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to {action === 'received' ? 'accept' : 'reject'} this donation?
+            Are you sure you want to accept this donation?
             This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -39,9 +37,9 @@ export const DonationConfirmationDialog = ({
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className={action === 'received' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
+            className="bg-green-600 hover:bg-green-700"
           >
-            {action === 'received' ? 'Accept' : 'Reject'}
+            Accept
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

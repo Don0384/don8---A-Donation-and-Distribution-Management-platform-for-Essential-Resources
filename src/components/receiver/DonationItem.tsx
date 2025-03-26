@@ -1,5 +1,5 @@
 
-import { Clock, Package, Check, X } from "lucide-react";
+import { Clock, Package, Check } from "lucide-react";
 import { Donation, categoryDisplayNames } from "@/types/receiverDashboard";
 import { StatusBadge } from "./StatusBadge";
 import { formatDate, formatTimeRemaining } from "@/utils/dateUtils";
@@ -91,20 +91,13 @@ export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
         </div>
 
         {donation.status === 'pending' && (
-          <div className="flex space-x-2 ml-4">
+          <div className="ml-4">
             <button 
               onClick={() => onAction(donation.id, 'received')}
               className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
               title="Accept donation"
             >
               <Check className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={() => onAction(donation.id, 'rejected')}
-              className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
-              title="Reject donation"
-            >
-              <X className="w-5 h-5" />
             </button>
           </div>
         )}
