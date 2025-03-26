@@ -24,13 +24,46 @@ const DonorInbox = () => {
       try {
         setIsLoading(true);
         
+        // Fetch messages with profile information
         const { data, error } = await supabase
           .from('messages')
-          .select('*')
+          .select(`
+            *,
+            profiles:user_id (
+              first_name,
+              last_name
+            )
+          `)
           .order('created_at', { ascending: false });
           
         if (error) throw error;
-        setMessages(data || []);
+        
+        // Transform the data to match our Message type
+        const transformedMessages = data.map(item => ({
+          id: item.id,
+          user_id: item.user_id,
+          content: item.content,
+          created_at: item.created_at,
+          user_type: item.user_type as 'donor' | 'receiver',
+          is_read: item.is_read,
+          sender_name: item.profiles ? 
+            `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() :
+            (item.user_type === 'receiver' ? 'Receiver' : 'Donor')
+        }));
+        
+        setMessages(transformedMessages);
+        
+        // Mark all messages as read
+        if (data && data.length > 0) {
+          const { error: updateError } = await supabase
+            .from('messages')
+            .update({ is_read: true })
+            .in('id', data.map(msg => msg.id));
+            
+          if (updateError) {
+            console.error("Error marking messages as read:", updateError);
+          }
+        }
         
       } catch (err: any) {
         console.error("Error fetching messages:", err);
@@ -90,7 +123,7 @@ const DonorInbox = () => {
                 >
                   <div className="flex justify-between items-start mb-3">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                      From {message.user_type === 'receiver' ? 'Receiver' : 'Donor'}
+                      From {message.sender_name || (message.user_type === 'receiver' ? 'Receiver' : 'Donor')}
                     </span>
                     <span className="text-sm text-gray-500">
                       {formatDate(message.created_at)}

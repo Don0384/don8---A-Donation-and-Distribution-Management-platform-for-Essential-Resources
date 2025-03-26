@@ -44,7 +44,8 @@ const ReceiverMessage = () => {
         .insert({
           user_id: user.id,
           content: message,
-          user_type: userType
+          user_type: userType,
+          is_read: false
         });
         
       if (error) throw error;
