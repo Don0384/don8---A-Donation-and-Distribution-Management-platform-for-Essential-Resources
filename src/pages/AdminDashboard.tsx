@@ -23,8 +23,8 @@ const AdminDashboard = () => {
       <div className="container mx-auto px-4 py-8">
         <DashboardHeader title="Admin Dashboard">
           <StatusFilter
-            value={statusFilter || ""}
-            onValueChange={(value) => setStatusFilter(value || null)}
+            value={statusFilter || "all"}
+            onValueChange={(value) => setStatusFilter(value === "all" ? null : value)}
           />
           <RefreshButton
             loading={loading}

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 
@@ -25,12 +24,17 @@ export async function signUp({
 }: { 
   email: string; 
   password: string;
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
   userType: "donor" | "receiver" | "admin";
   adminCode?: string;
 }) {
+  // Validate required fields
+  if (!firstName || !lastName || !phone) {
+    throw new Error("First name, last name, and phone number are required");
+  }
+
   // Verify admin code if userType is admin
   if (userType === "admin" && adminCode !== "ardosito") {
     throw new Error("Invalid admin verification code");
@@ -54,8 +58,18 @@ export async function signUp({
 }
 
 export async function signOut() {
-  const { error } = await supabase.auth.signOut();
-  if (error) throw error;
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Error during sign out:", error);
+      throw error;
+    }
+    console.log("Successfully signed out");
+    return { success: true };
+  } catch (error) {
+    console.error("Exception during sign out:", error);
+    throw error;
+  }
 }
 
 export async function getSession(): Promise<Session | null> {

@@ -2,7 +2,7 @@
 import UserTypeCard from "@/components/UserTypeCard";
 import Navbar from "@/components/Navbar";
 import { Link } from "react-router-dom";
-import { Key } from "lucide-react";
+import { Key, ChevronDown } from "lucide-react";
 
 const Index = () => {
   return (
@@ -21,15 +21,24 @@ const Index = () => {
           </Link>
         </div>
         
-        <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl">
-            Welcome to Don8
-          </h1>
-          <p className="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">
-            Join our community of generous donors and deserving receivers. Make a difference in someone's life today.
-          </p>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl">
+              Welcome to Don8
+            </h1>
+            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+              Join our community of generous donors and deserving receivers. Make a difference in someone's life today.
+            </p>
+            
+            <div className="mt-6 flex justify-center">
+              <a href="#options" className="flex flex-col items-center text-gray-500 hover:text-blue-600 transition-colors">
+                <span className="text-sm mb-2">Explore Options</span>
+                <ChevronDown className="w-6 h-6" />
+              </a>
+            </div>
+          </div>
           
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8 justify-items-center">
+          <div id="options" className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8 justify-items-center">
             <UserTypeCard
               type="donor"
               title="Donor"

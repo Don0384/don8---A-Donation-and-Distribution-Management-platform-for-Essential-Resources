@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { signIn, signUp } from "@/lib/auth";
@@ -13,7 +13,7 @@ const Auth = () => {
   const { type } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated, userType } = useAuth();
+  const { isAuthenticated, userType, loading } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -29,16 +29,18 @@ const Auth = () => {
   const isAdmin = type === "admin";
   let title = isDonor ? "Donor" : isAdmin ? "Admin" : "Receiver";
 
-  // Redirect if already authenticated
-  if (isAuthenticated) {
-    if (userType === "donor") {
-      navigate("/donor/dashboard");
-    } else if (userType === "receiver") {
-      navigate("/receiver/dashboard");
-    } else if (userType === "admin") {
-      navigate("/admin/dashboard");
+  // Redirect if already authenticated - only after auth has finished loading
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      if (userType === "donor") {
+        navigate("/donor/dashboard", { replace: true });
+      } else if (userType === "receiver") {
+        navigate("/receiver/dashboard", { replace: true });
+      } else if (userType === "admin") {
+        navigate("/admin/dashboard", { replace: true });
+      }
     }
-  }
+  }, [isAuthenticated, userType, loading, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -55,7 +57,13 @@ const Auth = () => {
           email: formData.email, 
           password: formData.password 
         });
+        // Don't navigate here - let the auth state change handler do it
       } else {
+        // Validate required fields for signup
+        if (!formData.email || !formData.password || !formData.firstName || !formData.lastName || !formData.phone) {
+          throw new Error("All fields are required");
+        }
+        
         await signUp({
           email: formData.email,
           password: formData.password,
@@ -71,8 +79,6 @@ const Auth = () => {
           description: "Please check your email to confirm your account.",
         });
       }
-      
-      // Navigation will be handled by the auth state change in AuthContext
     } catch (error: any) {
       console.error("Authentication error:", error);
       toast({
@@ -84,6 +90,15 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
+  
+  // If still loading auth state, show minimal UI to prevent flashing
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
