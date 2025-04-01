@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
-import { ThemeProvider } from "@/context/ThemeContext";
 import PrivateRoute from "@/components/PrivateRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -25,38 +24,36 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ThemeProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth/:type" element={<Auth />} />
-                
-                {/* Protected donor routes */}
-                <Route element={<PrivateRoute userType="donor" />}>
-                  <Route path="/donor/dashboard" element={<DonorDashboard />} />
-                  <Route path="/add-donation" element={<AddDonation />} />
-                  <Route path="/donor/inbox" element={<DonorInbox />} />
-                </Route>
-                
-                {/* Protected receiver routes */}
-                <Route element={<PrivateRoute userType="receiver" />}>
-                  <Route path="/receiver/dashboard" element={<ReceiverDashboard />} />
-                  <Route path="/receiver/message" element={<ReceiverMessage />} />
-                </Route>
-                
-                {/* Protected admin routes */}
-                <Route element={<PrivateRoute userType="admin" />}>
-                  <Route path="/admin/dashboard" element={<AdminDashboard />} />
-                </Route>
-                
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth/:type" element={<Auth />} />
+              
+              {/* Protected donor routes */}
+              <Route element={<PrivateRoute userType="donor" />}>
+                <Route path="/donor/dashboard" element={<DonorDashboard />} />
+                <Route path="/add-donation" element={<AddDonation />} />
+                <Route path="/donor/inbox" element={<DonorInbox />} />
+              </Route>
+              
+              {/* Protected receiver routes */}
+              <Route element={<PrivateRoute userType="receiver" />}>
+                <Route path="/receiver/dashboard" element={<ReceiverDashboard />} />
+                <Route path="/receiver/message" element={<ReceiverMessage />} />
+              </Route>
+              
+              {/* Protected admin routes */}
+              <Route element={<PrivateRoute userType="admin" />}>
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              </Route>
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -5,7 +5,6 @@ import { useAuth } from "@/context/AuthContext";
 import { signOut } from "@/lib/auth";
 import { Heart, Users, LogOut, User, LayoutDashboard, Menu } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +34,10 @@ const Navbar = () => {
     }
   };
 
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
+
   return (
     <header className="bg-white shadow-sm dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -45,17 +48,12 @@ const Navbar = () => {
             </Link>
           </div>
           
-          {/* Theme Toggle */}
-          <div className="hidden md:flex items-center ml-4 mr-auto">
-            <ThemeToggle />
-          </div>
-          
           {/* Mobile menu button */}
           <div className="md:hidden">
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              onClick={toggleMobileMenu}
               className="text-gray-700 dark:text-gray-300"
             >
               <Menu className="h-6 w-6" />
@@ -142,11 +140,6 @@ const Navbar = () => {
         {/* Mobile menu, show/hide based on menu state */}
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-100 dark:border-gray-800 animate-fade-in">
-            {/* Theme Toggle in mobile menu */}
-            <div className="px-2 py-3 flex justify-center">
-              <ThemeToggle />
-            </div>
-            
             {isAuthenticated ? (
               <div className="flex flex-col space-y-3 px-2">
                 {userType === "donor" && (
