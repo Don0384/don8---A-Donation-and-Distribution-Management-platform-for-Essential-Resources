@@ -24,41 +24,46 @@ const DonorInbox = () => {
       try {
         setIsLoading(true);
         
-        // Fetch messages with profile information
-        const { data, error } = await supabase
+        // First, get all messages
+        const { data: messageData, error: messageError } = await supabase
           .from('messages')
-          .select(`
-            *,
-            profiles:user_id (
-              first_name,
-              last_name
-            )
-          `)
+          .select('*')
           .order('created_at', { ascending: false });
           
-        if (error) throw error;
+        if (messageError) throw messageError;
         
-        // Transform the data to match our Message type
-        const transformedMessages = data.map(item => ({
-          id: item.id,
-          user_id: item.user_id,
-          content: item.content,
-          created_at: item.created_at,
-          user_type: item.user_type as 'donor' | 'receiver',
-          is_read: item.is_read,
-          sender_name: item.profiles ? 
-            `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() :
-            (item.user_type === 'receiver' ? 'Receiver' : 'Donor')
-        }));
+        // For each message, fetch the profile information separately
+        const messagesWithProfiles = await Promise.all(
+          messageData.map(async (message) => {
+            // Get profile information for the message sender
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('first_name, last_name')
+              .eq('id', message.user_id)
+              .single();
+              
+            return {
+              id: message.id,
+              user_id: message.user_id,
+              content: message.content,
+              created_at: message.created_at,
+              user_type: message.user_type,
+              is_read: message.is_read,
+              sender_name: profileData 
+                ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() 
+                : (message.user_type === 'receiver' ? 'Receiver' : 'Donor')
+            };
+          })
+        );
         
-        setMessages(transformedMessages);
+        setMessages(messagesWithProfiles);
         
         // Mark all messages as read
-        if (data && data.length > 0) {
+        if (messageData && messageData.length > 0) {
           const { error: updateError } = await supabase
             .from('messages')
             .update({ is_read: true })
-            .in('id', data.map(msg => msg.id));
+            .in('id', messageData.map(msg => msg.id));
             
           if (updateError) {
             console.error("Error marking messages as read:", updateError);
