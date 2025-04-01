@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { signOut } from "@/lib/auth";
 import { Heart, Users, LogOut, User, LayoutDashboard, Menu } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +43,11 @@ const Navbar = () => {
             <Link to="/" className="flex items-center">
               <span className="text-2xl font-heading font-bold bg-gradient-to-r from-indigo-500 to-purple-500 text-transparent bg-clip-text">Don8</span>
             </Link>
+          </div>
+          
+          {/* Theme Toggle */}
+          <div className="hidden md:flex items-center ml-4 mr-auto">
+            <ThemeToggle />
           </div>
           
           {/* Mobile menu button */}
@@ -136,6 +142,11 @@ const Navbar = () => {
         {/* Mobile menu, show/hide based on menu state */}
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-100 dark:border-gray-800 animate-fade-in">
+            {/* Theme Toggle in mobile menu */}
+            <div className="px-2 py-3 flex justify-center">
+              <ThemeToggle />
+            </div>
+            
             {isAuthenticated ? (
               <div className="flex flex-col space-y-3 px-2">
                 {userType === "donor" && (
