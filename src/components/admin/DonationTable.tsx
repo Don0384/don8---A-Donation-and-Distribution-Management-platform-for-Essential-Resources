@@ -1,12 +1,61 @@
 
 import { type DonationWithProfiles } from "@/types/donations";
+import { X } from "lucide-react";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface DonationTableProps {
   donations: DonationWithProfiles[];
   loading: boolean;
+  onDonationRemoved?: (donationId: number) => void;
 }
 
-const DonationTable = ({ donations, loading }: DonationTableProps) => {
+const DonationTable = ({ donations, loading, onDonationRemoved }: DonationTableProps) => {
+  const { toast } = useToast();
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const handleDeleteDonation = async (donationId: number) => {
+    try {
+      const { error } = await supabase
+        .from('donations')
+        .delete()
+        .eq('id', donationId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Donation removed",
+        description: "The donation has been successfully removed from the system."
+      });
+      
+      if (onDonationRemoved) {
+        onDonationRemoved(donationId);
+      }
+    } catch (err: any) {
+      console.error('Error deleting donation:', err);
+      toast({
+        title: "Error",
+        description: "Failed to remove the donation. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-10">
@@ -26,12 +75,13 @@ const DonationTable = ({ donations, loading }: DonationTableProps) => {
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Receiver</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {donations.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
                   No donations found
                 </td>
               </tr>
@@ -79,6 +129,39 @@ const DonationTable = ({ donations, loading }: DonationTableProps) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(donation.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {donation.status === 'pending' && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remove Donation</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to remove this donation? This action cannot be undone 
+                              and the donation will be permanently deleted from the system.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleDeleteDonation(donation.id)}
+                              className="bg-red-600 hover:bg-red-700 focus:ring-red-500"
+                            >
+                              Remove
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </td>
                 </tr>
               ))

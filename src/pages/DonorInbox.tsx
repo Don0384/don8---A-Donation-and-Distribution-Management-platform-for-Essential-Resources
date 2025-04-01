@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -47,7 +46,7 @@ const DonorInbox = () => {
               user_id: message.user_id,
               content: message.content,
               created_at: message.created_at,
-              user_type: message.user_type,
+              user_type: message.user_type as 'donor' | 'receiver',
               is_read: message.is_read,
               sender_name: profileData 
                 ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() 

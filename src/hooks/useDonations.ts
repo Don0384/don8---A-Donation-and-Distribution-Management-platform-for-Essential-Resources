@@ -27,6 +27,10 @@ export const useDonations = () => {
     }
   };
 
+  const removeDonation = (donationId: number) => {
+    setDonations(prev => prev.filter(donation => donation.id !== donationId));
+  };
+
   useEffect(() => {
     fetchDonations();
   }, []);
@@ -42,5 +46,6 @@ export const useDonations = () => {
     statusFilter,
     setStatusFilter,
     fetchDonations,
+    removeDonation,
   };
 };

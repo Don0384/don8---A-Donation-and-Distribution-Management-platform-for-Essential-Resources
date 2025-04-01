@@ -14,8 +14,13 @@ const AdminDashboard = () => {
     loading,
     statusFilter,
     setStatusFilter,
-    fetchDonations
+    fetchDonations,
+    removeDonation
   } = useDonations();
+
+  const handleDonationRemoved = (donationId: number) => {
+    removeDonation(donationId);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -46,6 +51,7 @@ const AdminDashboard = () => {
         <DonationTable
           donations={donations}
           loading={loading}
+          onDonationRemoved={handleDonationRemoved}
         />
       </div>
     </div>
