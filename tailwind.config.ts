@@ -20,17 +20,17 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        heading: ['Poppins', 'sans-serif'],
+        poppins: ['Poppins', 'sans-serif'],
+        rubik: ['Rubik', 'sans-serif'],
       },
       colors: {
         donor: {
-          primary: "#4F46E5",
-          hover: "#4338CA",
+          primary: "#7d5aff",
+          hover: "#6645e8",
         },
         receiver: {
-          primary: "#EC4899",
-          hover: "#DB2777",
+          primary: "#ec74d3",
+          hover: "#d860be",
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -88,12 +88,30 @@ export default {
           "0%": { transform: "scale(0.95)", opacity: "0" },
           "100%": { transform: "scale(1)", opacity: "1" }
         },
+        "pulse-soft": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.8" }
+        },
+        "float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-8px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.5s ease-out forwards",
         "scale-in": "scale-in 0.3s ease-out forwards",
+        "pulse-soft": "pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "float": "float 3s ease-in-out infinite",
+      },
+      boxShadow: {
+        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.08)',
+        'glow': '0 0 20px rgba(125, 90, 255, 0.2)',
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(circle, var(--tw-gradient-stops))',
+        'mesh-pattern': 'url("data:image/svg+xml,%3Csvg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="%237d5aff" fill-opacity="0.05" fill-rule="evenodd"%3E%3Cpath d="M0 20L20 0h2L0 22zm0 10L30 0h2L0 32zM10 0L0 10v2L12 0zm10 0L0 20v2L22 0zm10 0L0 30v2L32 0zm10 0L0 40h2L42 0zm-2 0L0 40v-2L40 0zm-4 0L0 36v-2L36 0z"/%3E%3C/g%3E%3C/svg%3E")',
       },
     },
   },
