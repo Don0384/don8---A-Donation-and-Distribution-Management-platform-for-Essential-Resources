@@ -35,7 +35,7 @@ export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
     
     fetchUnreadMessages();
     
-    // Set up real-time subscription for new messages
+    // Set up real-time subscription for new messages and read status changes
     const channel = supabase
       .channel('public:messages')
       .on('postgres_changes', { 

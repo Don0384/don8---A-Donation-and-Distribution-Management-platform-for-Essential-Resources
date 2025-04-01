@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -58,14 +59,19 @@ const DonorInbox = () => {
         setMessages(messagesWithProfiles);
         
         // Mark all messages as read
+        // Only mark as read messages that are not sent by the current user
         if (messageData && messageData.length > 0) {
-          const { error: updateError } = await supabase
-            .from('messages')
-            .update({ is_read: true })
-            .in('id', messageData.map(msg => msg.id));
-            
-          if (updateError) {
-            console.error("Error marking messages as read:", updateError);
+          const messagesToMark = messageData.filter(msg => msg.user_id !== user.id);
+          
+          if (messagesToMark.length > 0) {
+            const { error: updateError } = await supabase
+              .from('messages')
+              .update({ is_read: true })
+              .in('id', messagesToMark.map(msg => msg.id));
+              
+            if (updateError) {
+              console.error("Error marking messages as read:", updateError);
+            }
           }
         }
         
