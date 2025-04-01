@@ -47,12 +47,15 @@ const DonorInbox = () => {
               user_id: message.user_id,
               content: message.content,
               created_at: message.created_at,
-              user_type: message.user_type as 'donor' | 'receiver',
+              // Ensure user_type is properly cast to the required type
+              user_type: (message.user_type === 'donor' || message.user_type === 'receiver') 
+                ? message.user_type as 'donor' | 'receiver' 
+                : 'donor', // Default to 'donor' if it's neither
               is_read: message.is_read,
               sender_name: profileData 
                 ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() 
                 : (message.user_type === 'receiver' ? 'Receiver' : 'Donor')
-            };
+            } as Message; // Explicitly cast the entire object to Message type
           })
         );
         
