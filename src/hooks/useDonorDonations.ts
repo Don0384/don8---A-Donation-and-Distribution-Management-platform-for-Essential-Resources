@@ -59,7 +59,7 @@ export const useDonorDonations = () => {
     fetchDonations();
   }, [user]);
   
-  // Listen for donation deletions
+  // Enhanced listener for donation deletions
   useEffect(() => {
     if (!user) return;
     

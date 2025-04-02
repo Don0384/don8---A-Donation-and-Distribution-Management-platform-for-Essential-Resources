@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchDonationsWithProfiles } from "@/services/donationService";
@@ -29,6 +30,7 @@ export const useDonations = () => {
 
   const removeDonation = (donationId: number) => {
     setDonations(prev => prev.filter(donation => donation.id !== donationId));
+    console.log(`Donation with ID ${donationId} removed from admin dashboard`);
   };
 
   useEffect(() => {

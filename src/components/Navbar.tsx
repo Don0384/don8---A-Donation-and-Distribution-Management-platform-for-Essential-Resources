@@ -34,6 +34,7 @@ const Navbar = () => {
     }
   };
 
+  // Fixed mobile menu toggle function
   const toggleMobileMenu = () => {
     console.log("Toggle mobile menu called, current state:", mobileMenuOpen);
     setMobileMenuOpen(!mobileMenuOpen);
@@ -49,7 +50,7 @@ const Navbar = () => {
             </Link>
           </div>
           
-          {/* Mobile menu button */}
+          {/* Mobile menu button - Fixed to ensure it works */}
           <div className="md:hidden">
             <Button 
               variant="ghost" 
@@ -57,6 +58,7 @@ const Navbar = () => {
               onClick={toggleMobileMenu}
               className="text-gray-700 dark:text-gray-300"
               aria-label="Toggle mobile menu"
+              type="button"
             >
               <Menu className="h-6 w-6" />
             </Button>

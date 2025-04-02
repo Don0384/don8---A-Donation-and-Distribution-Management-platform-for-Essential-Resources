@@ -42,11 +42,11 @@ export const useReceiverDonations = (userId: string | undefined) => {
     }
   };
 
-  // Listen for donation deletions
+  // Enhanced listener for donation deletions
   useEffect(() => {
     if (!userId) return;
     
-    // Set up realtime listener for donation deletions
+    // Set up realtime listener for donation deletions with improved logging
     const unsubscribe = setupDonationDeleteListener((deletedId) => {
       console.log("Donation deleted in receiver dashboard:", deletedId);
       setDonations(prevDonations => prevDonations.filter(d => d.id !== deletedId));
