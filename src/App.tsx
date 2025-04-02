@@ -16,6 +16,7 @@ import AddDonation from "./pages/AddDonation";
 import AdminDashboard from "./pages/AdminDashboard";
 import ReceiverMessage from "./pages/ReceiverMessage";
 import DonorInbox from "./pages/DonorInbox";
+import ProfilePage from "./pages/ProfilePage";
 
 const App = () => {
   // Create a client
@@ -37,17 +38,20 @@ const App = () => {
                 <Route path="/donor/dashboard" element={<DonorDashboard />} />
                 <Route path="/add-donation" element={<AddDonation />} />
                 <Route path="/donor/inbox" element={<DonorInbox />} />
+                <Route path="/donor/profile" element={<ProfilePage />} />
               </Route>
               
               {/* Protected receiver routes */}
               <Route element={<PrivateRoute userType="receiver" />}>
                 <Route path="/receiver/dashboard" element={<ReceiverDashboard />} />
                 <Route path="/receiver/message" element={<ReceiverMessage />} />
+                <Route path="/receiver/profile" element={<ProfilePage />} />
               </Route>
               
               {/* Protected admin routes */}
               <Route element={<PrivateRoute userType="admin" />}>
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/admin/profile" element={<ProfilePage />} />
               </Route>
               
               <Route path="*" element={<NotFound />} />

@@ -34,10 +34,23 @@ const Navbar = () => {
     }
   };
 
-  // Fixed mobile menu toggle function
   const toggleMobileMenu = () => {
     console.log("Toggle mobile menu called, current state:", mobileMenuOpen);
     setMobileMenuOpen(!mobileMenuOpen);
+  };
+
+  const getProfilePath = () => {
+    if (userType === "donor") return "/donor/profile";
+    if (userType === "receiver") return "/receiver/profile";
+    if (userType === "admin") return "/admin/profile";
+    return "#";
+  };
+
+  const getDashboardPath = () => {
+    if (userType === "donor") return "/donor/dashboard";
+    if (userType === "receiver") return "/receiver/dashboard";
+    if (userType === "admin") return "/admin/dashboard";
+    return "/";
   };
 
   return (
@@ -50,7 +63,7 @@ const Navbar = () => {
             </Link>
           </div>
           
-          {/* Mobile menu button - Fixed to ensure it works */}
+          {/* Mobile menu button */}
           <div className="md:hidden">
             <Button 
               variant="ghost" 
@@ -109,6 +122,13 @@ const Navbar = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48 p-2">
                     <DropdownMenuItem 
+                      onClick={() => navigate(getProfilePath())}
+                      className="cursor-pointer flex items-center py-2 px-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                    >
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
                       onClick={handleLogout}
                       className="cursor-pointer flex items-center py-2 px-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
                     >
@@ -141,7 +161,7 @@ const Navbar = () => {
           </div>
         </div>
         
-        {/* Mobile menu, show/hide based on menu state */}
+        {/* Mobile menu */}
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-100 dark:border-gray-800 animate-fade-in">
             {isAuthenticated ? (
@@ -187,6 +207,18 @@ const Navbar = () => {
                     Admin Dashboard
                   </Button>
                 )}
+                
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start"
+                  onClick={() => {
+                    navigate(getProfilePath());
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  Profile
+                </Button>
                 
                 <Button
                   variant="ghost"

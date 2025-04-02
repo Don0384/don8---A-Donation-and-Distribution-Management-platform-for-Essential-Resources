@@ -7,7 +7,7 @@ import { DonationsList } from "@/components/receiver/DonationsList";
 import { DonationConfirmationDialog } from "@/components/receiver/DonationConfirmationDialog";
 import { useReceiverDonations } from "@/hooks/useReceiverDonations";
 import { useNavigate } from "react-router-dom";
-import { Edit } from "lucide-react";
+import { Edit, UserCircle } from "lucide-react";
 
 const ReceiverDashboard = () => {
   const { user } = useAuth();
@@ -104,14 +104,6 @@ const ReceiverDashboard = () => {
                 selectedStatus={selectedStatus}
                 setSelectedStatus={setSelectedStatus}
               />
-              
-              <button
-                onClick={() => navigate("/receiver/message")}
-                className="bg-receiver-primary hover:bg-receiver-hover text-white p-2 rounded-full flex items-center justify-center shadow-sm transition-colors"
-                aria-label="Write message"
-              >
-                <Edit className="w-5 h-5" />
-              </button>
             </div>
           </div>
           
@@ -123,6 +115,23 @@ const ReceiverDashboard = () => {
             onAction={openConfirmDialog}
           />
         </div>
+      </div>
+
+      <div className="fixed bottom-6 right-6 flex flex-col space-y-3">
+        <button
+          onClick={() => navigate("/receiver/profile")}
+          className="w-14 h-14 bg-gray-700 hover:bg-gray-800 text-white rounded-full flex items-center justify-center shadow-lg transition-colors duration-200"
+          aria-label="View profile"
+        >
+          <UserCircle className="w-6 h-6" />
+        </button>
+        <button
+          onClick={() => navigate("/receiver/message")}
+          className="w-14 h-14 bg-receiver-primary hover:bg-receiver-hover text-white rounded-full flex items-center justify-center shadow-lg transition-colors duration-200"
+          aria-label="Write message"
+        >
+          <Edit className="w-5 h-5" />
+        </button>
       </div>
 
       <DonationConfirmationDialog
