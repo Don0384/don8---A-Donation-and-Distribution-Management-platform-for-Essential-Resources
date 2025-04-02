@@ -7,11 +7,8 @@ import DonationTable from "@/components/admin/DonationTable";
 import DonationStats from "@/components/admin/DonationStats";
 import DonationDetails from "@/components/admin/DonationDetails";
 import Navbar from "@/components/Navbar";
-import { UserCircle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
-  const navigate = useNavigate();
   const {
     donations,
     loading,
@@ -56,16 +53,6 @@ const AdminDashboard = () => {
           loading={loading}
           onDonationRemoved={handleDonationRemoved}
         />
-      </div>
-
-      <div className="fixed bottom-6 right-6">
-        <button
-          onClick={() => navigate("/admin/profile")}
-          className="w-14 h-14 bg-gray-700 hover:bg-gray-800 text-white rounded-full flex items-center justify-center shadow-lg transition-colors duration-200"
-          aria-label="View profile"
-        >
-          <UserCircle className="w-6 h-6" />
-        </button>
       </div>
     </div>
   );

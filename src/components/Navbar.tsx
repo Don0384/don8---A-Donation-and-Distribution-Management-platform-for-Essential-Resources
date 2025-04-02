@@ -12,12 +12,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const Navbar = () => {
   const { isAuthenticated, userType } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -32,11 +32,6 @@ const Navbar = () => {
         variant: "destructive",
       });
     }
-  };
-
-  const toggleMobileMenu = () => {
-    console.log("Toggle mobile menu called, current state:", mobileMenuOpen);
-    setMobileMenuOpen(!mobileMenuOpen);
   };
 
   const getProfilePath = () => {
@@ -63,18 +58,101 @@ const Navbar = () => {
             </Link>
           </div>
           
-          {/* Mobile menu button */}
+          {/* Mobile menu drawer */}
           <div className="md:hidden">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={toggleMobileMenu}
-              className="text-gray-700 dark:text-gray-300"
-              aria-label="Toggle mobile menu"
-              type="button"
-            >
-              <Menu className="h-6 w-6" />
-            </Button>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-gray-700 dark:text-gray-300"
+                  aria-label="Toggle mobile menu"
+                  type="button"
+                >
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right">
+                <div className="py-4">
+                  <div className="space-y-4">
+                    {isAuthenticated ? (
+                      <>
+                        <h2 className="text-lg font-medium mb-2 px-2">Menu</h2>
+                        {userType === "donor" && (
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start text-donor-primary hover:bg-donor-primary/10"
+                            onClick={() => navigate("/donor/dashboard")}
+                          >
+                            <Heart className="w-4 h-4 mr-2" />
+                            Dashboard
+                          </Button>
+                        )}
+                        
+                        {userType === "receiver" && (
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start text-receiver-primary hover:bg-receiver-primary/10"
+                            onClick={() => navigate("/receiver/dashboard")}
+                          >
+                            <Users className="w-4 h-4 mr-2" />
+                            Dashboard
+                          </Button>
+                        )}
+                        
+                        {userType === "admin" && (
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            onClick={() => navigate("/admin/dashboard")}
+                          >
+                            <LayoutDashboard className="w-4 h-4 mr-2" />
+                            Admin Dashboard
+                          </Button>
+                        )}
+                        
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start"
+                          onClick={() => navigate(getProfilePath())}
+                        >
+                          <User className="w-4 h-4 mr-2" />
+                          Profile
+                        </Button>
+                        
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start text-red-500"
+                          onClick={handleLogout}
+                        >
+                          <LogOut className="w-4 h-4 mr-2" />
+                          Logout
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          variant="outline"
+                          onClick={() => navigate("/auth/donor")}
+                          className="w-full text-donor-primary border-donor-primary/20"
+                        >
+                          <Heart className="w-4 h-4 mr-2" />
+                          Donor Login
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => navigate("/auth/receiver")}
+                          className="w-full text-receiver-primary border-receiver-primary/20"
+                        >
+                          <Users className="w-4 h-4 mr-2" />
+                          Receiver Login
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
           
           {/* Desktop menu */}
@@ -160,103 +238,6 @@ const Navbar = () => {
             )}
           </div>
         </div>
-        
-        {/* Mobile menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-100 dark:border-gray-800 animate-fade-in">
-            {isAuthenticated ? (
-              <div className="flex flex-col space-y-3 px-2">
-                {userType === "donor" && (
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start text-donor-primary"
-                    onClick={() => {
-                      navigate("/donor/dashboard");
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    <Heart className="w-4 h-4 mr-2" />
-                    Dashboard
-                  </Button>
-                )}
-                
-                {userType === "receiver" && (
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start text-receiver-primary"
-                    onClick={() => {
-                      navigate("/receiver/dashboard");
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    <Users className="w-4 h-4 mr-2" />
-                    Dashboard
-                  </Button>
-                )}
-                
-                {userType === "admin" && (
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start text-gray-700 dark:text-gray-300"
-                    onClick={() => {
-                      navigate("/admin/dashboard");
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    <LayoutDashboard className="w-4 h-4 mr-2" />
-                    Admin Dashboard
-                  </Button>
-                )}
-                
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start"
-                  onClick={() => {
-                    navigate(getProfilePath());
-                    setMobileMenuOpen(false);
-                  }}
-                >
-                  <User className="w-4 h-4 mr-2" />
-                  Profile
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-red-500"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-col space-y-3 px-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    navigate("/auth/donor");
-                    setMobileMenuOpen(false);
-                  }}
-                  className="w-full text-donor-primary border-donor-primary/20"
-                >
-                  <Heart className="w-4 h-4 mr-2" />
-                  Donor Login
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    navigate("/auth/receiver");
-                    setMobileMenuOpen(false);
-                  }}
-                  className="w-full text-receiver-primary border-receiver-primary/20"
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  Receiver Login
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </header>
   );
