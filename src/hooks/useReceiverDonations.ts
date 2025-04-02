@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Donation } from "@/types/receiverDashboard";
+import { setupDonationDeleteListener } from "@/services/donationService";
 
 export const useReceiverDonations = (userId: string | undefined) => {
   const { toast } = useToast();
@@ -40,6 +41,21 @@ export const useReceiverDonations = (userId: string | undefined) => {
       setIsLoading(false);
     }
   };
+
+  // Listen for donation deletions
+  useEffect(() => {
+    if (!userId) return;
+    
+    // Set up realtime listener for donation deletions
+    const unsubscribe = setupDonationDeleteListener((deletedId) => {
+      console.log("Donation deleted in receiver dashboard:", deletedId);
+      setDonations(prevDonations => prevDonations.filter(d => d.id !== deletedId));
+    });
+    
+    return () => {
+      unsubscribe();
+    };
+  }, [userId]);
 
   const updateDonationStatus = async (
     donationId: number, 

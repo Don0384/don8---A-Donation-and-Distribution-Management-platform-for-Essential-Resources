@@ -88,3 +88,45 @@ export const fetchDonationsWithProfiles = async (): Promise<DonationWithProfiles
     throw error;
   }
 };
+
+// New function to delete a donation completely (used by admin)
+export const deleteDonation = async (donationId: number): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from("donations")
+      .delete()
+      .eq("id", donationId);
+      
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error("Error deleting donation:", error);
+    return false;
+  }
+};
+
+// Setup a subscription to donation deletions
+export const setupDonationDeleteListener = (onDelete: (donationId: number) => void) => {
+  const channel = supabase
+    .channel('public:donations')
+    .on(
+      'postgres_changes',
+      {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'donations',
+      },
+      (payload) => {
+        // Extract the donation ID from the payload
+        const deletedDonationId = payload.old?.id;
+        if (deletedDonationId) {
+          onDelete(deletedDonationId);
+        }
+      }
+    )
+    .subscribe();
+  
+  return () => {
+    supabase.removeChannel(channel);
+  };
+};

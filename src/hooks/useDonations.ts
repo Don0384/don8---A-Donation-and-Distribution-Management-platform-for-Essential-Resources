@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchDonationsWithProfiles } from "@/services/donationService";
 import { type DonationWithProfiles } from "@/types/donations";
+import { setupDonationDeleteListener } from "@/services/donationService";
 
 export const useDonations = () => {
   const { toast } = useToast();
@@ -33,9 +33,17 @@ export const useDonations = () => {
 
   useEffect(() => {
     fetchDonations();
+    
+    const unsubscribe = setupDonationDeleteListener((deletedId) => {
+      console.log("Donation deleted in admin dashboard:", deletedId);
+      removeDonation(deletedId);
+    });
+    
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
-  // Filter donations based on status
   const filteredDonations = statusFilter
     ? donations.filter((donation) => donation.status === statusFilter)
     : donations;

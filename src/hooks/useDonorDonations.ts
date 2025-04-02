@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatTimeRemaining } from "@/utils/dateUtils";
 import { useAuth } from "@/context/AuthContext";
+import { setupDonationDeleteListener } from "@/services/donationService";
 
 type Donation = {
   id: number;
@@ -56,6 +57,28 @@ export const useDonorDonations = () => {
     }
 
     fetchDonations();
+  }, [user]);
+  
+  // Listen for donation deletions
+  useEffect(() => {
+    if (!user) return;
+    
+    // Set up realtime listener for donation deletions
+    const unsubscribe = setupDonationDeleteListener((deletedId) => {
+      console.log("Donation deleted in donor dashboard:", deletedId);
+      setDonations(prevDonations => prevDonations.filter(d => d.id !== deletedId));
+      
+      // Also clean up the timeRemainingMap
+      setTimeRemainingMap(prev => {
+        const updated = {...prev};
+        delete updated[deletedId];
+        return updated;
+      });
+    });
+    
+    return () => {
+      unsubscribe();
+    };
   }, [user]);
   
   // Update timers for food items with expiry time

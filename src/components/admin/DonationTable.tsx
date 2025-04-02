@@ -1,4 +1,3 @@
-
 import { type DonationWithProfiles } from "@/types/donations";
 import { X } from "lucide-react";
 import { 
@@ -14,7 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { deleteDonation } from "@/services/donationService";
 import { useToast } from "@/hooks/use-toast";
 
 interface DonationTableProps {
@@ -29,12 +28,9 @@ const DonationTable = ({ donations, loading, onDonationRemoved }: DonationTableP
 
   const handleDeleteDonation = async (donationId: number) => {
     try {
-      const { error } = await supabase
-        .from('donations')
-        .delete()
-        .eq('id', donationId);
+      const success = await deleteDonation(donationId);
       
-      if (error) throw error;
+      if (!success) throw new Error("Failed to delete donation");
       
       toast({
         title: "Donation removed",
