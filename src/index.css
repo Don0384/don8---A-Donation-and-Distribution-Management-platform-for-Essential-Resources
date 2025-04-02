@@ -37,36 +37,6 @@
 
     --radius: 0.75rem;
   }
-
-  .dark {
-    --background: 240 10% 6%;
-    --foreground: 0 0% 98%;
-
-    --card: 240 10% 8%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 240 10% 8%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 258 90% 66%;
-    --primary-foreground: 240 5% 96%;
-
-    --secondary: 240 8% 15%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 240 8% 15%;
-    --muted-foreground: 240 5% 65%;
-
-    --accent: 258 30% 18%;
-    --accent-foreground: 258 90% 66%;
-
-    --destructive: 0 72.2% 50.6%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 240 8% 20%;
-    --input: 240 8% 20%;
-    --ring: 258 90% 66%;
-  }
 }
 
 @layer base {
@@ -96,55 +66,11 @@
 }
 
 @layer components {
-  .gradient-border {
-    position: relative;
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-
-  .gradient-border::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(125, 90, 255, 0.4), rgba(236, 116, 211, 0.4));
-    padding: 1px;
-    border-radius: var(--radius);
-    mask: linear-gradient(#fff 0 0) content-box,
-          linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-  }
-  
   .custom-card {
-    @apply relative overflow-hidden rounded-xl bg-gradient-to-br from-background to-card border border-border/50 shadow-sm transition duration-300;
+    @apply relative overflow-hidden rounded-xl bg-gradient-to-br from-background to-card border border-border/50 shadow-sm;
   }
   
   .custom-card:hover {
     @apply shadow-md border-primary/10;
-  }
-  
-  .btn-glow {
-    @apply relative overflow-hidden;
-  }
-  
-  .btn-glow::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(
-      circle,
-      rgba(255, 255, 255, 0.1) 0%,
-      transparent 70%
-    );
-    transform: scale(0);
-    opacity: 0;
-    transition: transform 0.5s, opacity 0.5s;
-  }
-  
-  .btn-glow:hover::after {
-    transform: scale(1);
-    opacity: 1;
   }
 }
