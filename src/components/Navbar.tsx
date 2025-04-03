@@ -1,4 +1,3 @@
-
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
@@ -47,6 +46,10 @@ const Navbar = () => {
     return "/";
   };
 
+  const handleAuthNavigation = (type: string) => {
+    navigate(`/auth/${type}`);
+  };
+
   return (
     <header className="bg-white shadow-sm dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -57,7 +60,6 @@ const Navbar = () => {
             </Link>
           </div>
           
-          {/* Mobile menu drawer */}
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
@@ -152,7 +154,7 @@ const Navbar = () => {
                       <>
                         <Button
                           variant="outline"
-                          onClick={() => navigate("/auth/donor")}
+                          onClick={() => handleAuthNavigation("donor")}
                           className="w-full text-donor-primary border-donor-primary/20"
                         >
                           <Heart className="w-4 h-4 mr-2" />
@@ -160,7 +162,7 @@ const Navbar = () => {
                         </Button>
                         <Button
                           variant="outline"
-                          onClick={() => navigate("/auth/receiver")}
+                          onClick={() => handleAuthNavigation("receiver")}
                           className="w-full text-receiver-primary border-receiver-primary/20"
                         >
                           <Users className="w-4 h-4 mr-2" />
@@ -174,7 +176,6 @@ const Navbar = () => {
             </Sheet>
           </div>
           
-          {/* Desktop menu */}
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated ? (
               <>
@@ -239,7 +240,7 @@ const Navbar = () => {
               <div className="flex space-x-3">
                 <Button
                   variant="outline"
-                  onClick={() => navigate("/auth/donor")}
+                  onClick={() => handleAuthNavigation("donor")}
                   className="text-donor-primary border-donor-primary/20 hover:bg-donor-primary/10 transition-colors"
                 >
                   <Heart className="w-4 h-4 mr-2" />
@@ -247,7 +248,7 @@ const Navbar = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => navigate("/auth/receiver")}
+                  onClick={() => handleAuthNavigation("receiver")}
                   className="text-receiver-primary border-receiver-primary/20 hover:bg-receiver-primary/10 transition-colors"
                 >
                   <Users className="w-4 h-4 mr-2" />
