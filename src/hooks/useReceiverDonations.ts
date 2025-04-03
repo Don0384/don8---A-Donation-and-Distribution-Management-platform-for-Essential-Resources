@@ -61,9 +61,33 @@ export const useReceiverDonations = (userId: string | undefined) => {
     donationId: number, 
     action: 'received' | 'rejected'
   ) => {
-    if (!userId) return;
+    if (!userId) return false;
     
     try {
+      // First, get the donation details to check if it's an expired food item
+      const { data: donationData, error: fetchError } = await supabase
+        .from('donations')
+        .select('*')
+        .eq('id', donationId)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      // Check if it's a food item and if it's expired
+      if (donationData.category === 'food' && donationData.expiry_time) {
+        const expiryTime = new Date(donationData.expiry_time);
+        const now = new Date();
+        
+        if (expiryTime <= now && action === 'received') {
+          toast({
+            title: "Cannot accept expired food",
+            description: "This food item has expired and cannot be accepted.",
+            variant: "destructive",
+          });
+          return false;
+        }
+      }
+      
       console.log('Updating donation with ID:', donationId);
       console.log('Setting status to:', action);
       console.log('Current user ID:', userId);

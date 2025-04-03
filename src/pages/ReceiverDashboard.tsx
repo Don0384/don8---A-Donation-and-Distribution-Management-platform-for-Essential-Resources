@@ -9,7 +9,7 @@ import { useReceiverDonations } from "@/hooks/useReceiverDonations";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Bell } from "lucide-react";
+import { Edit } from "lucide-react";
 
 const ReceiverDashboard = () => {
   const { user } = useAuth();
@@ -33,15 +33,17 @@ const ReceiverDashboard = () => {
     setDonations
   } = useReceiverDonations(user?.id);
 
+  // Only fetch donations when user changes or status changes
   useEffect(() => {
     if (!user) return;
+    
     fetchDonations(selectedStatus);
     
     // Mark donations as seen when viewing pending donations
     if (selectedStatus === "pending" || selectedStatus === "All") {
       markDonationsSeen();
     }
-  }, [selectedStatus, user, markDonationsSeen]);
+  }, [selectedStatus, user?.id]);
 
   const openConfirmDialog = (donationId: number, action: 'received' | 'rejected') => {
     setSelectedDonation({ id: donationId, action: 'received' });

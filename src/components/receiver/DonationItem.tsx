@@ -1,5 +1,5 @@
 
-import { Clock, Package, Check } from "lucide-react";
+import { Clock, Package, Check, X } from "lucide-react";
 import { Donation, categoryDisplayNames } from "@/types/receiverDashboard";
 import { StatusBadge } from "./StatusBadge";
 import { formatDate, formatTimeRemaining } from "@/utils/dateUtils";
@@ -14,12 +14,18 @@ export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
   const [timeRemaining, setTimeRemaining] = useState<string | null>(
     formatTimeRemaining(donation.expiry_time)
   );
+  
+  const [isExpired, setIsExpired] = useState<boolean>(
+    donation.expiry_time ? new Date(donation.expiry_time) <= new Date() : false
+  );
 
   // Update timer every second for food items with expiry time
   useEffect(() => {
     if (donation.category === 'food' && donation.expiry_time) {
       const interval = setInterval(() => {
-        setTimeRemaining(formatTimeRemaining(donation.expiry_time));
+        const remaining = formatTimeRemaining(donation.expiry_time);
+        setTimeRemaining(remaining);
+        setIsExpired(new Date(donation.expiry_time) <= new Date());
       }, 1000);
       
       return () => clearInterval(interval);
@@ -76,13 +82,13 @@ export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
               {donation.category === 'food' && donation.expiry_time && (
                 <div className="mt-2">
                   <div className="flex items-center text-sm font-medium">
-                    <Clock className="w-4 h-4 text-amber-500 mr-1" />
-                    <span className="text-amber-700">
-                      Freshness timer: {timeRemaining || 'Expired'}
+                    <Clock className={`w-4 h-4 mr-1 ${isExpired ? 'text-red-500' : 'text-amber-500'}`} />
+                    <span className={isExpired ? 'text-red-700' : 'text-amber-700'}>
+                      {isExpired ? 'Expired' : `Freshness timer: ${timeRemaining}`}
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
-                    This food item will remain fresh until {new Date(donation.expiry_time).toLocaleString()}
+                    This food item {isExpired ? 'was' : 'will be'} fresh until {new Date(donation.expiry_time).toLocaleString()}
                   </p>
                 </div>
               )}
@@ -92,13 +98,19 @@ export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
 
         {donation.status === 'pending' && (
           <div className="ml-4">
-            <button 
-              onClick={() => onAction(donation.id, 'received')}
-              className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
-              title="Accept donation"
-            >
-              <Check className="w-5 h-5" />
-            </button>
+            {donation.category === 'food' && isExpired ? (
+              <div className="text-xs text-red-600 font-medium">
+                Cannot accept expired food
+              </div>
+            ) : (
+              <button 
+                onClick={() => onAction(donation.id, 'received')}
+                className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
+                title="Accept donation"
+              >
+                <Check className="w-5 h-5" />
+              </button>
+            )}
           </div>
         )}
       </div>
