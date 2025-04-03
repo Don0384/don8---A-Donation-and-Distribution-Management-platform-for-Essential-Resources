@@ -5,52 +5,16 @@ import { Inbox } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { Badge } from "@/components/ui/badge";
+import { NotificationBadge } from "@/components/notifications/NotificationBadge";
 
 type DashboardHeaderProps = {
   title: string;
+  unreadMessageCount?: number;
 };
 
-export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
+export const DashboardHeader = ({ title, unreadMessageCount = 0 }: DashboardHeaderProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [unreadCount, setUnreadCount] = useState(0);
-  
-  useEffect(() => {
-    if (!user) return;
-    
-    const fetchUnreadMessages = async () => {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('id')
-        .eq('is_read', false)
-        .not('user_id', 'eq', user.id);
-        
-      if (error) {
-        console.error("Error fetching unread messages:", error);
-        return;
-      }
-      
-      setUnreadCount(data?.length || 0);
-    };
-    
-    fetchUnreadMessages();
-    
-    // Set up real-time subscription for new messages and read status changes
-    const channel = supabase
-      .channel('public:messages')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public',
-        table: 'messages' 
-      }, () => {
-        fetchUnreadMessages();
-      })
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
   
   return (
     <div className="flex justify-between items-center mb-6">
@@ -65,13 +29,8 @@ export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
           <Inbox className="w-5 h-5" />
         </button>
         
-        {unreadCount > 0 && (
-          <Badge 
-            variant="destructive" 
-            className="absolute -top-2 -right-2 min-w-[1.25rem] h-5 flex items-center justify-center p-1 text-xs font-semibold"
-          >
-            {unreadCount}
-          </Badge>
+        {unreadMessageCount > 0 && (
+          <NotificationBadge count={unreadMessageCount} />
         )}
       </div>
     </div>

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -11,6 +10,7 @@ import { formatDate } from "@/utils/dateUtils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useNotifications } from "@/hooks/useNotifications";
 
 const DonorInbox = () => {
   const { user } = useAuth();
@@ -19,6 +19,7 @@ const DonorInbox = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { markMessagesSeen } = useNotifications("donor");
 
   useEffect(() => {
     async function fetchMessages() {
@@ -64,6 +65,9 @@ const DonorInbox = () => {
         
         setMessages(messagesWithProfiles);
         
+        // Mark messages as seen in the notifications system
+        markMessagesSeen();
+        
         // Mark all messages as read
         // Only mark as read messages that are not sent by the current user
         if (messageData && messageData.length > 0) {
@@ -95,7 +99,7 @@ const DonorInbox = () => {
     }
 
     fetchMessages();
-  }, [user, toast]);
+  }, [user, toast, markMessagesSeen]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col bg-mesh-pattern">

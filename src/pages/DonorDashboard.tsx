@@ -5,17 +5,23 @@ import Navbar from "@/components/Navbar";
 import { DonationsList } from "@/components/donor/DonationsList";
 import { DashboardHeader } from "@/components/donor/DashboardHeader";
 import { useDonorDonations } from "@/hooks/useDonorDonations";
+import { useNotifications } from "@/hooks/useNotifications";
+import { useEffect } from "react";
 
 const DonorDashboard = () => {
   const navigate = useNavigate();
   const { donations, isLoading, error, timeRemainingMap } = useDonorDonations();
+  const { unreadMessageCount } = useNotifications("donor");
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col relative">
       <Navbar />
       <div className="flex-1 p-4">
         <div className="max-w-6xl mx-auto">
-          <DashboardHeader title="My Donations" />
+          <DashboardHeader 
+            title="My Donations" 
+            unreadMessageCount={unreadMessageCount}
+          />
           
           <DonationsList 
             donations={donations}

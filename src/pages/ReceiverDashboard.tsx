@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
@@ -5,8 +6,10 @@ import { FilterControls } from "@/components/receiver/FilterControls";
 import { DonationsList } from "@/components/receiver/DonationsList";
 import { DonationConfirmationDialog } from "@/components/receiver/DonationConfirmationDialog";
 import { useReceiverDonations } from "@/hooks/useReceiverDonations";
+import { useNotifications } from "@/hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
-import { Edit } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Edit, Bell } from "lucide-react";
 
 const ReceiverDashboard = () => {
   const { user } = useAuth();
@@ -18,6 +21,8 @@ const ReceiverDashboard = () => {
     id: number;
     action: 'received' | null;
   }>({ id: 0, action: null });
+
+  const { unreadDonationCount, markDonationsSeen } = useNotifications("receiver");
 
   const {
     donations,
@@ -31,7 +36,12 @@ const ReceiverDashboard = () => {
   useEffect(() => {
     if (!user) return;
     fetchDonations(selectedStatus);
-  }, [selectedStatus, user]);
+    
+    // Mark donations as seen when viewing pending donations
+    if (selectedStatus === "pending" || selectedStatus === "All") {
+      markDonationsSeen();
+    }
+  }, [selectedStatus, user, markDonationsSeen]);
 
   const openConfirmDialog = (donationId: number, action: 'received' | 'rejected') => {
     setSelectedDonation({ id: donationId, action: 'received' });
@@ -94,6 +104,14 @@ const ReceiverDashboard = () => {
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
             <h1 className="text-3xl font-bold text-gray-900">
               {getStatusTitle(selectedStatus)}
+              
+              {unreadDonationCount > 0 && selectedStatus !== "pending" && (
+                <span className="ml-3 inline-flex">
+                  <Badge variant="destructive" className="text-xs">
+                    {unreadDonationCount} new
+                  </Badge>
+                </span>
+              )}
             </h1>
             
             <div className="flex items-center gap-4">
