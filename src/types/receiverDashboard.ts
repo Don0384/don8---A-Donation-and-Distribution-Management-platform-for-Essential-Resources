@@ -11,6 +11,7 @@ export type Donation = {
   location: string;
   receiver_id: string | null;
   expiry_time: string | null;
+  images: string[] | null;
 };
 
 export const categoryDisplayNames: Record<string, string> = {
@@ -18,7 +19,8 @@ export const categoryDisplayNames: Record<string, string> = {
   food: "Food",
   electronics: "Electronics",
   medical_equipment: "Medical Equipment", 
-  medicine: "Medicine"
+  medicine: "Medicine",
+  toys: "Toys"
 };
 
 export const categories = [
@@ -27,7 +29,8 @@ export const categories = [
   "food",
   "electronics",
   "medical_equipment",
-  "medicine"
+  "medicine",
+  "toys"
 ];
 
 export const statuses = [

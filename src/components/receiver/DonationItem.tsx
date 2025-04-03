@@ -1,9 +1,10 @@
 
-import { Clock, Package, Check, X } from "lucide-react";
+import { Clock, Package, Check, X, Image as ImageIcon, Maximize } from "lucide-react";
 import { Donation, categoryDisplayNames } from "@/types/receiverDashboard";
 import { StatusBadge } from "./StatusBadge";
 import { formatDate, formatTimeRemaining } from "@/utils/dateUtils";
 import { useEffect, useState } from "react";
+import { ImageGallery } from "./ImageGallery";
 
 interface DonationItemProps {
   donation: Donation;
@@ -18,6 +19,9 @@ export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
   const [isExpired, setIsExpired] = useState<boolean>(
     donation.expiry_time ? new Date(donation.expiry_time) <= new Date() : false
   );
+  
+  const [showGallery, setShowGallery] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   // Update timer every second for food items with expiry time
   useEffect(() => {
@@ -43,6 +47,11 @@ export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
 
   const getCategoryDisplay = (category: string) => {
     return categoryDisplayNames[category] || category;
+  };
+
+  const openGallery = (index: number) => {
+    setSelectedImageIndex(index);
+    setShowGallery(true);
   };
 
   return (
@@ -94,6 +103,30 @@ export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
               )}
             </div>
           </div>
+          
+          {donation.images && donation.images.length > 0 && (
+            <div className="mt-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Images</h4>
+              <div className="grid grid-cols-3 gap-3">
+                {donation.images.map((url, index) => (
+                  <div 
+                    key={index} 
+                    className="relative h-24 border rounded cursor-pointer overflow-hidden group"
+                    onClick={() => openGallery(index)}
+                  >
+                    <img 
+                      src={url} 
+                      alt={`${donation.item_name} ${index + 1}`} 
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <Maximize className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {donation.status === 'pending' && (
@@ -114,6 +147,16 @@ export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
           </div>
         )}
       </div>
+      
+      {donation.images && donation.images.length > 0 && (
+        <ImageGallery 
+          images={donation.images}
+          isOpen={showGallery}
+          onClose={() => setShowGallery(false)}
+          initialIndex={selectedImageIndex}
+          itemName={donation.item_name}
+        />
+      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,12 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, XCircle, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 import { DonationConfirmDialog } from "@/components/donations/DonationConfirmDialog";
+import { ImageUploader } from "@/components/donations/ImageUploader";
 
 const AddDonation = () => {
   const navigate = useNavigate();
@@ -31,6 +32,8 @@ const AddDonation = () => {
     location: ""
   });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +61,8 @@ const AddDonation = () => {
         category: formData.category,
         location: formData.location,
         status: 'pending',
-        expiry_time: expiryTime ? new Date(Date.now() + parseTimeToMilliseconds(expiryTime)).toISOString() : null
+        expiry_time: expiryTime ? new Date(Date.now() + parseTimeToMilliseconds(expiryTime)).toISOString() : null,
+        images: uploadedImages.length > 0 ? uploadedImages : null
       };
 
       console.log("Submitting donation with data:", donationData);
@@ -103,6 +107,18 @@ const AddDonation = () => {
   const parseTimeToMilliseconds = (time: string): number => {
     const [hours, minutes, seconds] = time.split(':').map(Number);
     return ((hours * 60 + minutes) * 60 + seconds) * 1000;
+  };
+
+  const handleImageUpload = (urls: string[]) => {
+    setUploadedImages(prev => {
+      const newImages = [...prev, ...urls];
+      // Limit to 3 images
+      return newImages.slice(0, 3);
+    });
+  };
+
+  const removeImage = (urlToRemove: string) => {
+    setUploadedImages(prev => prev.filter(url => url !== urlToRemove));
   };
 
   return (
@@ -180,6 +196,7 @@ const AddDonation = () => {
                   <SelectItem value="electronics">Electronic Equipment</SelectItem>
                   <SelectItem value="medical_equipment">Medical Equipment</SelectItem>
                   <SelectItem value="medicine">Medicine</SelectItem>
+                  <SelectItem value="toys">Toys</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -199,10 +216,44 @@ const AddDonation = () => {
               />
             </div>
 
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Images (up to 3)
+              </label>
+              
+              {uploadedImages.length > 0 && (
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  {uploadedImages.map((url, index) => (
+                    <div key={index} className="relative border rounded-md overflow-hidden h-24">
+                      <img 
+                        src={url} 
+                        alt={`Upload ${index + 1}`} 
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(url)}
+                        className="absolute top-1 right-1 bg-white bg-opacity-70 rounded-full p-1"
+                      >
+                        <XCircle className="w-4 h-4 text-red-500" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {uploadedImages.length < 3 && (
+                <ImageUploader 
+                  onUpload={handleImageUpload}
+                  onUploading={setIsUploading}
+                />
+              )}
+            </div>
+
             <Button 
               type="submit" 
               className="w-full bg-donor-primary hover:bg-donor-hover"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isUploading}
             >
               {isSubmitting ? (
                 <>
