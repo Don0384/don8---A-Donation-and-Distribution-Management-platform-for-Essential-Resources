@@ -11,7 +11,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const Navbar = () => {
@@ -67,7 +66,6 @@ const Navbar = () => {
                   size="icon" 
                   className="text-gray-700 dark:text-gray-300"
                   aria-label="Toggle mobile menu"
-                  type="button"
                 >
                   <Menu className="h-6 w-6" />
                 </Button>
@@ -79,46 +77,67 @@ const Navbar = () => {
                       <>
                         <h2 className="text-lg font-medium mb-2 px-2">Menu</h2>
                         {userType === "donor" && (
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start text-donor-primary hover:bg-donor-primary/10"
-                            onClick={() => navigate("/donor/dashboard")}
-                          >
-                            <Heart className="w-4 h-4 mr-2" />
-                            Dashboard
-                          </Button>
+                          <>
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start text-donor-primary hover:bg-donor-primary/10"
+                              onClick={() => navigate("/donor/dashboard")}
+                            >
+                              <Heart className="w-4 h-4 mr-2" />
+                              Dashboard
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start"
+                              onClick={() => navigate("/donor/profile")}
+                            >
+                              <User className="w-4 h-4 mr-2" />
+                              Profile
+                            </Button>
+                          </>
                         )}
                         
                         {userType === "receiver" && (
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start text-receiver-primary hover:bg-receiver-primary/10"
-                            onClick={() => navigate("/receiver/dashboard")}
-                          >
-                            <Users className="w-4 h-4 mr-2" />
-                            Dashboard
-                          </Button>
+                          <>
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start text-receiver-primary hover:bg-receiver-primary/10"
+                              onClick={() => navigate("/receiver/dashboard")}
+                            >
+                              <Users className="w-4 h-4 mr-2" />
+                              Dashboard
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start"
+                              onClick={() => navigate("/receiver/profile")}
+                            >
+                              <User className="w-4 h-4 mr-2" />
+                              Profile
+                            </Button>
+                          </>
                         )}
                         
                         {userType === "admin" && (
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                            onClick={() => navigate("/admin/dashboard")}
-                          >
-                            <LayoutDashboard className="w-4 h-4 mr-2" />
-                            Admin Dashboard
-                          </Button>
+                          <>
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                              onClick={() => navigate("/admin/dashboard")}
+                            >
+                              <LayoutDashboard className="w-4 h-4 mr-2" />
+                              Admin Dashboard
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start"
+                              onClick={() => navigate("/admin/profile")}
+                            >
+                              <User className="w-4 h-4 mr-2" />
+                              Profile
+                            </Button>
+                          </>
                         )}
-                        
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start"
-                          onClick={() => navigate(getProfilePath())}
-                        >
-                          <User className="w-4 h-4 mr-2" />
-                          Profile
-                        </Button>
                         
                         <Button
                           variant="ghost"
