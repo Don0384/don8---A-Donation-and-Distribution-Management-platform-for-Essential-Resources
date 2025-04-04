@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -17,7 +18,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useNavigate } from "react-router-dom";
-import { categories } from "@/types/receiverDashboard";
+import { categories, categoryDisplayNames } from "@/types/receiverDashboard";
 import { ImageUploader } from "./ImageUploader";
 import { 
   Select, 
@@ -27,8 +28,8 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 
-// Remove "All" from categories and add "toys" category
-const donationCategories = [...categories.filter(category => category !== "All")];
+// Remove "All" from categories for donation form
+const donationCategories = categories.filter(category => category !== "All");
 
 const donationSchema = z.object({
   item_name: z.string().min(1, "Item name is required"),
