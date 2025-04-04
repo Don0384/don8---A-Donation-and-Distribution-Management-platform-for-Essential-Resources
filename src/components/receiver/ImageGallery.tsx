@@ -1,5 +1,6 @@
 
-import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
+import { useState } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ImageGalleryProps {
@@ -19,109 +20,68 @@ export const ImageGallery = ({
 }: ImageGalleryProps) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
-  useEffect(() => {
-    setCurrentIndex(initialIndex);
-  }, [initialIndex, isOpen]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isOpen) return;
-
-      if (e.key === 'Escape') {
-        onClose();
-      } else if (e.key === 'ArrowLeft') {
-        goToPrevious();
-      } else if (e.key === 'ArrowRight') {
-        goToNext();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, currentIndex, images.length, onClose]);
-
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
-    
-    return () => {
-      document.body.style.overflow = 'auto';
-    };
-  }, [isOpen]);
-
-  const goToNext = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
+  const handleNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prevIndex) => 
+      prevIndex === images.length - 1 ? 0 : prevIndex + 1
+    );
   };
 
-  const goToPrevious = () => {
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
+  const handlePrevious = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prevIndex) => 
+      prevIndex === 0 ? images.length - 1 : prevIndex - 1
+    );
   };
 
-  if (!isOpen) return null;
+  if (!images || images.length === 0) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
-      <button 
-        onClick={onClose}
-        className="absolute top-4 right-4 text-white p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
-        aria-label="Close gallery"
-      >
-        <X className="w-6 h-6" />
-      </button>
-      
-      <div className="absolute top-4 left-4 text-white">
-        <h2 className="text-lg font-medium">{itemName}</h2>
-        <p className="text-sm opacity-70">Image {currentIndex + 1} of {images.length}</p>
-      </div>
-
-      <div className="w-full h-full flex items-center justify-center p-8">
-        <img 
-          src={images[currentIndex]} 
-          alt={`${itemName} - Image ${currentIndex + 1}`}
-          className="max-h-full max-w-full object-contain"
-        />
-      </div>
-
-      {images.length > 1 && (
-        <>
-          <button
-            onClick={goToPrevious}
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-colors"
-            aria-label="Previous image"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-5xl p-0 overflow-hidden bg-gray-900 mx-auto w-full sm:w-11/12 md:w-10/12 lg:w-9/12">
+        <div className="relative h-[80vh] flex flex-col">
+          {/* Header */}
+          <div className="flex justify-between items-center p-2 bg-gray-800 text-white">
+            <p className="text-sm truncate pl-2">
+              {itemName} - Image {currentIndex + 1} of {images.length}
+            </p>
+            <DialogClose asChild>
+              <button className="p-1 hover:bg-gray-700 rounded-full">
+                <X className="h-5 w-5" />
+              </button>
+            </DialogClose>
+          </div>
           
-          <button
-            onClick={goToNext}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-colors"
-            aria-label="Next image"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
-        </>
-      )}
-
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-2">
-        {images.length > 1 && images.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentIndex(index)}
-            className={`w-2 h-2 rounded-full transition-all ${
-              index === currentIndex 
-                ? 'bg-white scale-125' 
-                : 'bg-white bg-opacity-50 hover:bg-opacity-75'
-            }`}
-            aria-label={`Go to image ${index + 1}`}
-          />
-        ))}
-      </div>
-    </div>
+          {/* Image container */}
+          <div className="flex-1 flex items-center justify-center bg-black">
+            <img
+              src={images[currentIndex]}
+              alt={`${itemName} image ${currentIndex + 1}`}
+              className="max-h-full max-w-full object-contain"
+            />
+          </div>
+          
+          {/* Navigation controls */}
+          {images.length > 1 && (
+            <>
+              <button 
+                onClick={handlePrevious}
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </button>
+              <button 
+                onClick={handleNext}
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70"
+                aria-label="Next image"
+              >
+                <ChevronRight className="h-6 w-6" />
+              </button>
+            </>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };

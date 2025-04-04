@@ -89,9 +89,57 @@ export const fetchDonationsWithProfiles = async (): Promise<DonationWithProfiles
   }
 };
 
+// Utility function to extract file path from storage URL
+const extractFilePathFromUrl = (url: string): string | null => {
+  try {
+    // Parse the URL to extract the path
+    const urlObj = new URL(url);
+    // Remove the domain and storage part to get just the file path
+    const pathParts = urlObj.pathname.split('/');
+    if (pathParts.length >= 3 && pathParts[1] === 'storage' && pathParts[2] === 'v1') {
+      // Skip /storage/v1/object/public/bucket-name/
+      return pathParts.slice(6).join('/');
+    }
+    return null;
+  } catch (error) {
+    console.error("Error extracting file path from URL:", error);
+    return null;
+  }
+};
+
 // New function to delete a donation completely (used by admin)
 export const deleteDonation = async (donationId: number): Promise<boolean> => {
   try {
+    // First, get the donation to check if it has images
+    const { data: donation, error: fetchError } = await supabase
+      .from("donations")
+      .select("images")
+      .eq("id", donationId)
+      .single();
+      
+    if (fetchError) {
+      console.error("Error fetching donation for delete:", fetchError);
+    }
+    
+    // If the donation has images, delete them from storage
+    if (donation?.images && donation.images.length > 0) {
+      const filePaths = donation.images
+        .map(url => extractFilePathFromUrl(url))
+        .filter(path => path !== null) as string[];
+      
+      if (filePaths.length > 0) {
+        const { error: storageError } = await supabase.storage
+          .from("donation-images")
+          .remove(filePaths);
+          
+        if (storageError) {
+          console.error("Error deleting donation images:", storageError);
+          // Continue with deletion of donation record even if image deletion fails
+        }
+      }
+    }
+
+    // Delete the donation record
     const { error } = await supabase
       .from("donations")
       .delete()
