@@ -102,8 +102,8 @@ const DonationStats = ({ donations }: DonationStatsProps) => {
           <CardTitle className="text-lg">Donations by Status</CardTitle>
         </CardHeader>
         <CardContent>
-          <ChartContainer className="h-[200px]" config={config}>
-            <PieChart>
+          <ChartContainer className="h-[240px]" config={config}>
+            <PieChart margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <Pie
                 data={stats.statusData}
                 cx="50%"
