@@ -20,7 +20,8 @@ export const categoryDisplayNames: Record<string, string> = {
   electronics: "Electronics",
   medical_equipment: "Medical Equipment", 
   medicine: "Medicine",
-  toys: "Toys"
+  toys: "Toys",
+  books: "Books"
 };
 
 export const categories = [
@@ -30,7 +31,8 @@ export const categories = [
   "electronics",
   "medical_equipment",
   "medicine",
-  "toys"
+  "toys",
+  "books"
 ];
 
 export const statuses = [

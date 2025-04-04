@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -29,7 +28,7 @@ import {
 } from "@/components/ui/select";
 
 // Remove "All" from categories and add "toys" category
-const donationCategories = [...categories.filter(category => category !== "All"), "toys"];
+const donationCategories = [...categories.filter(category => category !== "All")];
 
 const donationSchema = z.object({
   item_name: z.string().min(1, "Item name is required"),
