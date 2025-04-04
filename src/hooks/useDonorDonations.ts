@@ -15,6 +15,7 @@ type Donation = {
   description: string | null;
   location: string;
   expiry_time: string | null;
+  images: string[] | null; // Make sure images is included here as well
 };
 
 export const useDonorDonations = () => {

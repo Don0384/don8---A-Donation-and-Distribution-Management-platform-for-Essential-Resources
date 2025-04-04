@@ -12,6 +12,7 @@ type Donation = {
   description: string | null;
   location: string;
   expiry_time: string | null;
+  images: string[] | null; // Added this property to match DonationCard requirements
 };
 
 type DonationsListProps = {
