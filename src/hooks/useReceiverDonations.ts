@@ -33,7 +33,14 @@ export const useReceiverDonations = (userId: string | undefined) => {
       const { data, error } = await query;
       
       if (error) throw error;
-      setDonations(data || []);
+      
+      // Transform data to ensure it matches the Donation type with images
+      const transformedData: Donation[] = (data || []).map(item => ({
+        ...item,
+        images: item.images || []
+      }));
+      
+      setDonations(transformedData);
     } catch (err: any) {
       console.error('Error fetching donations:', err);
       setError(err.message);

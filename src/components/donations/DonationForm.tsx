@@ -28,8 +28,8 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 
-// Remove "All" from categories
-const donationCategories = categories.filter(category => category !== "All");
+// Remove "All" from categories and add "toys" category
+const donationCategories = [...categories.filter(category => category !== "All"), "toys"];
 
 const donationSchema = z.object({
   item_name: z.string().min(1, "Item name is required"),
@@ -82,15 +82,20 @@ export function DonationForm() {
 
     setIsSubmitting(true);
     try {
-      // Prepare the data to be submitted
+      // Prepare the donation data to be submitted
       const donationData = {
-        ...data,
+        item_name: data.item_name,
+        description: data.description || null,
+        quantity: data.quantity,
+        category: data.category,
+        location: data.location,
         donor_id: user.id,
+        expiry_time: data.expiry_time || null,
         images: images.length > 0 ? images : null,
       };
 
       // Insert the donation into the database
-      const { error } = await supabase.from("donations").insert([donationData]);
+      const { error } = await supabase.from("donations").insert(donationData);
 
       if (error) {
         throw error;
@@ -101,7 +106,7 @@ export function DonationForm() {
         description: "Your donation has been successfully created.",
       });
 
-      navigate("/donor");
+      navigate("/donor/dashboard");
     } catch (error: any) {
       console.error("Error creating donation:", error);
       toast({
