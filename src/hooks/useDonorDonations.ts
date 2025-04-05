@@ -5,31 +5,11 @@ import { formatTimeRemaining } from "@/utils/dateUtils";
 import { useAuth } from "@/context/AuthContext";
 import { setupDonationDeleteListener } from "@/services/donationService";
 import { DonationUser } from "@/types/donations";
-
-type Donation = {
-  id: number;
-  item_name: string;
-  quantity: string;
-  category: string;
-  status: string;
-  created_at: string;
-  description: string | null;
-  location: string;
-  expiry_time: string | null;
-  images: string[] | null;
-  receiver_id: string | null;
-  receiver: DonationUser | null;
-  pickup_requests: Array<{
-    user_id: string;
-    pickup_time: string;
-    created_at: string;
-  }>;
-  acceptance_deadline: string | null;
-};
+import { DonorDonation } from "@/types/donorDashboard";
 
 export const useDonorDonations = () => {
   const { user } = useAuth();
-  const [donations, setDonations] = useState<Donation[]>([]);
+  const [donations, setDonations] = useState<DonorDonation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRemainingMap, setTimeRemainingMap] = useState<Record<number, string | null>>({});
@@ -58,21 +38,22 @@ export const useDonorDonations = () => {
         
         if (error) throw error;
         
-        // Get pickup requests for each donation using type casting
+        // Get pickup requests for each donation using type assertion
         const enhancedData = await Promise.all((data || []).map(async (donation) => {
-          const { data: pickupRequests } = await (supabase
-            .from('pickup_requests' as any)
+          // Use type assertion to tell TypeScript this is safe
+          const { data: pickupRequests } = await supabase
+            .from('pickup_requests')
             .select('*')
             .eq('donation_id', donation.id)
-            .order('pickup_time', { ascending: true }) as any);
+            .order('pickup_time', { ascending: true }) as any;
             
           return {
             ...donation,
             pickup_requests: pickupRequests || []
-          };
+          } as DonorDonation;
         }));
         
-        setDonations(enhancedData as Donation[]);
+        setDonations(enhancedData);
         
         // Initialize time remaining for food items
         const initialTimeMap: Record<number, string | null> = {};
@@ -124,7 +105,9 @@ export const useDonorDonations = () => {
       const updatedTimeMap: Record<number, string | null> = {};
       
       foodDonations.forEach(donation => {
-        updatedTimeMap[donation.id] = formatTimeRemaining(donation.expiry_time);
+        if (donation.expiry_time) {
+          updatedTimeMap[donation.id] = formatTimeRemaining(donation.expiry_time);
+        }
       });
       
       setTimeRemainingMap(prev => ({...prev, ...updatedTimeMap}));

@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,13 +11,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface DonationConfirmDialogProps {
+export interface DonationConfirmDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   title: string;
   description: string;
-  confirmText?: string;
+  confirmText: string;
   confirmVariant?: string;
 }
 
@@ -26,7 +27,7 @@ export const DonationConfirmDialog = ({
   onConfirm,
   title,
   description,
-  confirmText = "Confirm",
+  confirmText,
   confirmVariant = "default"
 }: DonationConfirmDialogProps) => {
   return (
@@ -40,7 +41,7 @@ export const DonationConfirmDialog = ({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
+          <AlertDialogAction 
             onClick={onConfirm}
             className={confirmVariant === "destructive" ? "bg-red-600 hover:bg-red-700" : ""}
           >

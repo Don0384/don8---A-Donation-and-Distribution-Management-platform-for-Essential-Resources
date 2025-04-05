@@ -1,4 +1,6 @@
 
+import { DonationUser, PickupRequest } from './donations';
+
 export interface DonorDonation {
   id: number;
   item_name: string;
@@ -11,5 +13,8 @@ export interface DonorDonation {
   expiry_time: string | null;
   images: string[] | null;
   receiver_id: string | null;
+  receiver?: DonationUser | null;
+  pickup_requests?: PickupRequest[];
   timeRemaining?: string | null;
+  acceptance_deadline?: string | null;
 }

@@ -1,36 +1,31 @@
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Dispatch, SetStateAction } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface StatusFilterProps {
-  value?: string;
-  onValueChange?: (value: string) => void;
-  selectedStatus?: string;
-  onStatusChange?: (status: string) => void;
+  selectedStatus: string;
+  onStatusChange: Dispatch<SetStateAction<string>>;
 }
 
-const StatusFilter = ({ value, onValueChange, selectedStatus, onStatusChange }: StatusFilterProps) => {
-  // Use either the new or old prop names
-  const currentValue = value || selectedStatus || "all";
-  const handleChange = onValueChange || onStatusChange || (() => {});
-
+const StatusFilter = ({ selectedStatus, onStatusChange }: StatusFilterProps) => {
   return (
-    <Select value={currentValue} onValueChange={handleChange}>
-      <SelectTrigger className="w-[180px]">
-        <SelectValue placeholder="All statuses" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="all">All statuses</SelectItem>
-        <SelectItem value="pending">Pending</SelectItem>
-        <SelectItem value="received">Received</SelectItem>
-        <SelectItem value="rejected">Rejected</SelectItem>
-      </SelectContent>
-    </Select>
+    <div className="flex items-center">
+      <span className="mr-2 text-sm font-medium">Status:</span>
+      <Select
+        value={selectedStatus}
+        onValueChange={(value) => onStatusChange(value)}
+      >
+        <SelectTrigger className="w-36">
+          <SelectValue placeholder="Select status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="All">All</SelectItem>
+          <SelectItem value="pending">Pending</SelectItem>
+          <SelectItem value="received">Received</SelectItem>
+          <SelectItem value="rejected">Rejected</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
   );
 };
 

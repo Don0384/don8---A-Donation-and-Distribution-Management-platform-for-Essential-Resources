@@ -24,7 +24,7 @@ const ReceiverDashboard = () => {
   const [pickupDialogOpen, setPickupDialogOpen] = useState(false);
   const [selectedDonation, setSelectedDonation] = useState<{
     id: number;
-    action: 'received' | null;
+    action: 'received' | 'rejected' | null;
     name?: string;
   }>({ id: 0, action: null });
 
@@ -51,7 +51,7 @@ const ReceiverDashboard = () => {
     }
   }, [selectedStatus, user?.id]);
 
-  const openPickupDialog = (donationId: number, action: 'received', name: string) => {
+  const openPickupDialog = (donationId: number, action: 'received' | 'rejected', name: string) => {
     setSelectedDonation({ id: donationId, action, name });
     setPickupDialogOpen(true);
   };
@@ -60,14 +60,14 @@ const ReceiverDashboard = () => {
     if (!selectedDonation.id || !user) return;
     
     try {
-      // First, store the pickup request
-      const { error: insertError } = await (supabase
-        .from('pickup_requests' as any)
+      // First, store the pickup request using type assertion
+      const { error: insertError } = await supabase
+        .from('pickup_requests')
         .insert({
           donation_id: selectedDonation.id,
           user_id: user.id,
           pickup_time: pickupTime
-        } as any));
+        }) as any;
         
       if (insertError) throw insertError;
       

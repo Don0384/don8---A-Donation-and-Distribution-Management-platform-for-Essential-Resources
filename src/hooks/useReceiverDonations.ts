@@ -43,13 +43,14 @@ export const useReceiverDonations = (userId: string | undefined) => {
       
       if (error) throw error;
       
-      // Get pickup requests for each donation using type casting to work around TypeScript issues
+      // Get pickup requests for each donation using type assertion
       const enhancedData = await Promise.all((data || []).map(async (donation) => {
-        const { data: pickupRequests } = await (supabase
-          .from('pickup_requests' as any)
+        // Use type assertion for proper TypeScript compatibility
+        const { data: pickupRequests } = await supabase
+          .from('pickup_requests')
           .select('*')
           .eq('donation_id', donation.id)
-          .order('pickup_time', { ascending: true }) as any);
+          .order('pickup_time', { ascending: true }) as any;
         
         return {
           ...donation,

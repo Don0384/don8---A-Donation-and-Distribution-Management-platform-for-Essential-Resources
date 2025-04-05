@@ -72,12 +72,20 @@ export const fetchDonationsWithProfiles = async (): Promise<DonationWithProfiles
           status === 'received' ? "received" :
           status === 'rejected' ? "rejected" : "pending";
 
+        // Get pickup requests
+        const { data: pickupRequests } = await supabase
+          .from('pickup_requests')
+          .select('*')
+          .eq('donation_id', donation.id)
+          .order('pickup_time', { ascending: true }) as any;
+
         return {
           ...donation,
           donor,
           receiver,
           status: validatedStatus,
-          expiry_time: donation.expiry_time
+          expiry_time: donation.expiry_time,
+          pickup_requests: pickupRequests || []
         } as DonationWithProfiles;
       })
     );
@@ -137,6 +145,17 @@ export const deleteDonation = async (donationId: number): Promise<boolean> => {
           // Continue with deletion of donation record even if image deletion fails
         }
       }
+    }
+
+    // Delete all pickup requests for this donation
+    const { error: pickupDeleteError } = await supabase
+      .from('pickup_requests')
+      .delete()
+      .eq('donation_id', donationId);
+
+    if (pickupDeleteError) {
+      console.error("Error deleting pickup requests:", pickupDeleteError);
+      // Continue with deletion of donation record even if pickup request deletion fails
     }
 
     // Delete the donation record

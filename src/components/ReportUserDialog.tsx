@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
@@ -11,48 +11,49 @@ interface ReportUserDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   reportedUserId: string;
-  reportedUserName: string;
   reporterUserId: string;
+  reportedUserName: string;
 }
 
-export function ReportUserDialog({ 
-  isOpen, 
-  onOpenChange, 
+export const ReportUserDialog = ({
+  isOpen,
+  onOpenChange,
   reportedUserId,
-  reportedUserName,
-  reporterUserId
-}: ReportUserDialogProps) {
+  reporterUserId,
+  reportedUserName
+}: ReportUserDialogProps) => {
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async () => {
-    if (!reason || reason.trim().length < 10) {
+    if (!reason.trim()) {
       toast({
-        title: "Missing information",
-        description: "Please provide a detailed reason for your report (at least 10 characters).",
+        title: "Error",
+        description: "Please provide a reason for the report.",
         variant: "destructive",
       });
       return;
     }
-    
+
     setIsSubmitting(true);
+    
     try {
-      // Use "as any" to bypass TypeScript type checking for now
-      const { error } = await (supabase
-        .from('user_reports' as any)
+      // Use type assertion to handle the user_reports table
+      const { error } = await supabase
+        .from('user_reports')
         .insert({
           reported_user_id: reportedUserId,
           reporter_user_id: reporterUserId,
-          reason,
+          reason: reason.trim(),
           status: 'pending'
-        } as any));
+        } as any);
         
       if (error) throw error;
       
       toast({
         title: "Report submitted",
-        description: "Thank you for your report. Our admin team will review it shortly."
+        description: "Your report has been submitted and will be reviewed by our team.",
       });
       
       onOpenChange(false);
@@ -61,7 +62,7 @@ export function ReportUserDialog({
       console.error("Error submitting report:", error);
       toast({
         title: "Error",
-        description: "Failed to submit report. Please try again later.",
+        description: "An error occurred while submitting the report. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -71,31 +72,21 @@ export function ReportUserDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Report User</DialogTitle>
+          <DialogTitle>Report {reportedUserName}</DialogTitle>
           <DialogDescription>
-            You are about to report {reportedUserName}. Please provide a detailed reason for this report.
-            Our admin team will review this report and take appropriate action.
+            Please provide details about why you are reporting this user. Our admin team will review your report.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <label htmlFor="reason" className="text-sm font-medium">
-              Reason for report
-            </label>
-            <Textarea
-              id="reason"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="Please explain why you are reporting this user in detail..."
-              className="h-32"
-            />
-            <p className="text-xs text-gray-500">
-              Minimum 10 characters. Be specific about what happened and provide any relevant details.
-            </p>
-          </div>
+        <div className="py-4">
+          <Textarea
+            placeholder="Describe the issue or reason for reporting..."
+            className="min-h-[120px]"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+          />
         </div>
         
         <DialogFooter>
@@ -104,12 +95,12 @@ export function ReportUserDialog({
           </Button>
           <Button 
             onClick={handleSubmit} 
-            disabled={isSubmitting || !reason || reason.trim().length < 10}
-            className="bg-red-600 hover:bg-red-700 text-white"
+            disabled={isSubmitting}
+            className="bg-red-600 hover:bg-red-700"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Submitting...
               </>
             ) : (
@@ -120,4 +111,4 @@ export function ReportUserDialog({
       </DialogContent>
     </Dialog>
   );
-}
+};

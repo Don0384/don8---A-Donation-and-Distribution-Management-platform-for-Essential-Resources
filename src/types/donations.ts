@@ -10,10 +10,22 @@ export interface DonationUser {
 }
 
 export interface PickupRequest {
+  id?: string;
   user_id: string;
   donation_id: number;
   pickup_time: string;
   created_at: string;
+}
+
+export interface Report {
+  id: number;
+  reported_user_id: string;
+  reporter_user_id: string;
+  reason: string;
+  status: string;
+  created_at: string;
+  reported_user?: DonationUser;
+  reporter_user?: DonationUser;
 }
 
 export interface DonationWithProfiles {

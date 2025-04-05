@@ -1,265 +1,243 @@
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Ban, Check, X } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { UserReport } from "@/types/receiverDashboard";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Check, X, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Report } from "@/types/donations";
 
-export function UserReportsTable() {
-  const [reports, setReports] = useState<UserReport[]>([]);
+const UserReportsTable = () => {
+  const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
-  const [actionType, setActionType] = useState<'resolve' | 'dismiss' | 'ban' | null>(null);
-  const [selectedReport, setSelectedReport] = useState<UserReport | null>(null);
-  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  
-  useEffect(() => {
-    fetchReports();
-  }, []);
-  
+
   const fetchReports = async () => {
     try {
       setLoading(true);
-      
-      // Use type casting to bypass TypeScript type checking for now
-      const { data, error } = await (supabase
-        .from('user_reports' as any)
+
+      // Use type assertion for proper TypeScript compatibility
+      const { data, error } = await supabase
+        .from('user_reports')
         .select(`
           *,
           reported_user:reported_user_id(
             email:email,
             first_name:raw_user_meta_data->first_name,
-            last_name:raw_user_meta_data->last_name,
-            user_type:raw_user_meta_data->user_type
+            last_name:raw_user_meta_data->last_name
           ),
           reporter_user:reporter_user_id(
             email:email,
             first_name:raw_user_meta_data->first_name,
-            last_name:raw_user_meta_data->last_name,
-            user_type:raw_user_meta_data->user_type
+            last_name:raw_user_meta_data->last_name
           )
-        `) as any)
-        .order('created_at', { ascending: false });
-        
+        `) as any;
+      
       if (error) throw error;
       
-      setReports(data || []);
-    } catch (error) {
-      console.error("Error fetching reports:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load user reports. Please refresh the page.",
-        variant: "destructive",
-      });
+      // Convert data to our Report type
+      const typedReports = data ? data.map((report: any) => ({
+        id: report.id,
+        reported_user_id: report.reported_user_id,
+        reporter_user_id: report.reporter_user_id,
+        reason: report.reason,
+        status: report.status,
+        created_at: report.created_at,
+        reported_user: report.reported_user,
+        reporter_user: report.reporter_user
+      })) : [];
+      
+      setReports(typedReports);
+    } catch (err: any) {
+      console.error("Error fetching reports:", err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
   
-  const handleAction = (report: UserReport, action: 'resolve' | 'dismiss' | 'ban') => {
-    setSelectedReport(report);
-    setActionType(action);
-    setIsConfirmDialogOpen(true);
-  };
-  
-  const confirmAction = async () => {
-    if (!selectedReport || !actionType) return;
-    
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
+  const updateReportStatus = async (reportId: number, status: "approved" | "rejected") => {
     try {
-      if (actionType === 'ban') {
-        // First, update the report status
-        const { error: reportError } = await (supabase
-          .from('user_reports' as any)
-          .update({ status: 'resolved' })
-          .eq('id', selectedReport.id) as any);
-          
-        if (reportError) throw reportError;
-        
-        // Then delete the user (would require admin privileges)
-        // In real-world, this might flag the user as banned instead
-        const { error: userError } = await (supabase.auth as any).admin.deleteUser(
-          selectedReport.reported_user_id
-        );
-        
-        if (userError) throw userError;
-        
-        toast({
-          title: "User banned",
-          description: "The user has been banned and removed from the platform."
-        });
-      } else {
-        // Just update the report status
-        const { error } = await (supabase
-          .from('user_reports' as any)
-          .update({ status: actionType === 'resolve' ? 'resolved' : 'dismissed' })
-          .eq('id', selectedReport.id) as any);
-          
-        if (error) throw error;
-        
-        toast({
-          title: actionType === 'resolve' ? "Report resolved" : "Report dismissed",
-          description: actionType === 'resolve' 
-            ? "The report has been marked as resolved." 
-            : "The report has been dismissed."
-        });
-      }
+      // Use type assertion to handle the user_reports table
+      const { error } = await supabase
+        .from('user_reports')
+        .update({ status })
+        .eq('id', reportId) as any;
       
-      // Refresh the reports list
-      fetchReports();
-    } catch (error: any) {
-      console.error(`Error during ${actionType} action:`, error);
+      if (error) throw error;
+      
       toast({
-        title: "Action failed",
-        description: error.message || `Failed to ${actionType} the report.`,
+        title: `Report ${status}`,
+        description: `The report has been ${status} successfully.`,
+      });
+      
+      setReports(reports.map(report => 
+        report.id === reportId ? { ...report, status } : report
+      ));
+    } catch (err: any) {
+      console.error("Error updating report status:", err);
+      toast({
+        title: "Error",
+        description: err.message || "An error occurred while updating the report status.",
         variant: "destructive",
       });
-    } finally {
-      setIsConfirmDialogOpen(false);
-      setSelectedReport(null);
-      setActionType(null);
     }
   };
-  
-  return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">User Reports</h2>
+
+  const banUser = async (userId: string) => {
+    try {
+      // Use type assertion to handle the user_reports table
+      const { error } = await supabase
+        .from('user_reports')
+        .update({ status: "banned" })
+        .eq('reported_user_id', userId) as any;
       
-      {loading ? (
-        <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="p-4 border rounded-lg">
-              <div className="flex justify-between mb-3">
-                <Skeleton className="h-6 w-1/3" />
-                <Skeleton className="h-6 w-24" />
-              </div>
-              <Skeleton className="h-12 w-full mb-3" />
-              <div className="flex justify-end space-x-2">
-                <Skeleton className="h-8 w-20" />
-                <Skeleton className="h-8 w-20" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : reports.length === 0 ? (
-        <div className="bg-white rounded-lg p-6 text-center">
-          <p className="text-gray-500">No user reports found.</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
+      if (error) throw error;
+      
+      toast({
+        title: "User banned",
+        description: "The user has been banned successfully.",
+      });
+      
+      // Refresh reports to show updated statuses
+      fetchReports();
+    } catch (err: any) {
+      console.error("Error banning user:", err);
+      toast({
+        title: "Error",
+        description: err.message || "An error occurred while banning the user.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-10">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
+
+  if (reports.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">No user reports found.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Date</TableHead>
+            <TableHead>Reported User</TableHead>
+            <TableHead>Reporter</TableHead>
+            <TableHead>Reason</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {reports.map((report) => (
-            <div 
-              key={report.id} 
-              className={`bg-white p-4 rounded-lg border ${
-                report.status === 'pending' 
-                  ? 'border-amber-200 bg-amber-50' 
-                  : report.status === 'resolved' 
-                    ? 'border-green-200 bg-green-50' 
-                    : 'border-gray-200'
-              }`}
-            >
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h3 className="font-medium">
-                    Report against: <span className="text-red-600">
-                      {report.reported_user?.first_name} {report.reported_user?.last_name} ({report.reported_user?.user_type})
-                    </span>
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Reported by: {report.reporter_user?.first_name} {report.reporter_user?.last_name} ({report.reporter_user?.user_type})
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {new Date(report.created_at).toLocaleString()}
-                  </p>
-                </div>
-                <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                  report.status === 'pending' 
-                    ? 'bg-amber-100 text-amber-800' 
-                    : report.status === 'resolved' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
-                }`}>
+            <TableRow key={report.id}>
+              <TableCell className="whitespace-nowrap">
+                {new Date(report.created_at).toLocaleDateString()}
+              </TableCell>
+              <TableCell>
+                {report.reported_user ? (
+                  <div>
+                    <div className="font-medium">
+                      {report.reported_user.first_name} {report.reported_user.last_name}
+                    </div>
+                    <div className="text-sm text-gray-500">{report.reported_user.email}</div>
+                  </div>
+                ) : (
+                  <span className="text-gray-500">Unknown user</span>
+                )}
+              </TableCell>
+              <TableCell>
+                {report.reporter_user ? (
+                  <div>
+                    <div className="font-medium">
+                      {report.reporter_user.first_name} {report.reporter_user.last_name}
+                    </div>
+                    <div className="text-sm text-gray-500">{report.reporter_user.email}</div>
+                  </div>
+                ) : (
+                  <span className="text-gray-500">Unknown user</span>
+                )}
+              </TableCell>
+              <TableCell className="max-w-xs">
+                <div className="truncate">{report.reason}</div>
+              </TableCell>
+              <TableCell>
+                <span className={`px-2 py-1 text-xs font-medium rounded-full 
+                  ${report.status === 'approved' ? 'bg-green-100 text-green-800' : 
+                    report.status === 'rejected' ? 'bg-red-100 text-red-800' : 
+                    report.status === 'banned' ? 'bg-purple-100 text-purple-800' :
+                    'bg-yellow-100 text-yellow-800'}`}>
                   {report.status.charAt(0).toUpperCase() + report.status.slice(1)}
                 </span>
-              </div>
-              
-              <div className="bg-gray-50 p-3 rounded my-2 text-sm">
-                <p className="whitespace-pre-wrap">{report.reason}</p>
-              </div>
-              
-              {report.status === 'pending' && (
-                <div className="flex justify-end space-x-2 mt-3">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleAction(report, 'dismiss')}
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    Dismiss
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="border-green-500 text-green-600 hover:bg-green-50"
-                    onClick={() => handleAction(report, 'resolve')}
-                  >
-                    <Check className="h-4 w-4 mr-1" />
-                    Resolve
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="border-red-500 text-red-600 hover:bg-red-50"
-                    onClick={() => handleAction(report, 'ban')}
-                  >
-                    <Ban className="h-4 w-4 mr-1" />
-                    Ban User
-                  </Button>
-                </div>
-              )}
-            </div>
+              </TableCell>
+              <TableCell>
+                {report.status === 'pending' && (
+                  <div className="flex space-x-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-green-500 text-green-600 hover:bg-green-50"
+                      onClick={() => updateReportStatus(report.id, 'approved')}
+                    >
+                      <Check className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-red-500 text-red-600 hover:bg-red-50"
+                      onClick={() => updateReportStatus(report.id, 'rejected')}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-purple-500 text-purple-600 hover:bg-purple-50"
+                      onClick={() => banUser(report.reported_user_id)}
+                    >
+                      Ban User
+                    </Button>
+                  </div>
+                )}
+              </TableCell>
+            </TableRow>
           ))}
-        </div>
-      )}
-      
-      <AlertDialog
-        open={isConfirmDialogOpen}
-        onOpenChange={setIsConfirmDialogOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {actionType === 'ban' 
-                ? 'Ban User' 
-                : actionType === 'resolve' 
-                  ? 'Resolve Report' 
-                  : 'Dismiss Report'}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {actionType === 'ban' 
-                ? 'This will permanently remove the user from the platform. This action cannot be undone.' 
-                : actionType === 'resolve' 
-                  ? 'This will mark the report as resolved. You can still ban the user later if needed.' 
-                  : 'This will mark the report as dismissed.'}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmAction}
-              className={actionType === 'ban' ? 'bg-red-600 hover:bg-red-700' : ''}
-            >
-              {actionType === 'ban' 
-                ? 'Ban User' 
-                : actionType === 'resolve' 
-                  ? 'Resolve' 
-                  : 'Dismiss'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        </TableBody>
+      </Table>
     </div>
   );
-}
+};
+
+export default UserReportsTable;

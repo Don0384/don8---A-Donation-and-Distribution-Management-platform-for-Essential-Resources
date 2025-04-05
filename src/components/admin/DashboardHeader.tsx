@@ -4,7 +4,7 @@ import { User } from "@supabase/supabase-js";
 
 interface DashboardHeaderProps {
   title?: string;
-  user?: User;
+  user?: User | null;
   children?: ReactNode;
 }
 

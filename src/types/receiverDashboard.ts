@@ -1,31 +1,15 @@
 
-export const categories = ["All", "food", "clothes", "furniture", "electronics", "books", "toys", "other"];
-export const statuses = ["All", "pending", "received", "rejected"];
+import { DonationUser } from './donations';
 
 export const categoryDisplayNames: Record<string, string> = {
-  food: "Food",
-  clothes: "Clothes",
-  furniture: "Furniture",
-  electronics: "Electronics",
-  books: "Books",
-  toys: "Toys",
-  other: "Other"
+  "food": "Food",
+  "clothes": "Clothing",
+  "furniture": "Furniture",
+  "electronics": "Electronics",
+  "books": "Books",
+  "toys": "Toys",
+  "other": "Other"
 };
-
-export interface DonationUser {
-  id: string;
-  email: string;
-  first_name: string | null;
-  last_name: string | null;
-  phone: string | null;
-}
-
-export interface PickupRequest {
-  user_id: string;
-  donation_id: number;
-  pickup_time: string;
-  created_at: string;
-}
 
 export interface Donation {
   id: number;
@@ -33,35 +17,19 @@ export interface Donation {
   description: string | null;
   category: string;
   quantity: string;
+  location: string;
   status: string;
   created_at: string;
-  location: string;
-  expiry_time: string | null;
-  images: string[];
   donor_id: string;
   receiver_id: string | null;
-  donor: DonationUser | null;
-  acceptance_deadline: string | null;
-  pickup_requests: PickupRequest[];
-}
-
-export interface UserReport {
-  id: number;
-  reported_user_id: string;
-  reporter_user_id: string;
-  reason: string;
-  status: 'pending' | 'resolved' | 'dismissed';
-  created_at: string;
-  reported_user?: {
-    email: string;
-    first_name: string | null;
-    last_name: string | null;
-    user_type: string;
-  } | null;
-  reporter_user?: {
-    email: string;
-    first_name: string | null;
-    last_name: string | null;
-    user_type: string;
-  } | null;
+  expiry_time: string | null;
+  images: string[] | null;
+  pickup_requests?: Array<{
+    user_id: string;
+    pickup_time: string;
+    created_at: string;
+    donation_id?: number;
+  }>;
+  acceptance_deadline?: string | null;
+  donor?: DonationUser | null;
 }

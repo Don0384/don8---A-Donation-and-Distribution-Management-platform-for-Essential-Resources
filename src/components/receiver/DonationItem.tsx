@@ -1,4 +1,3 @@
-
 import { Clock, Package, Check, X, Image as ImageIcon, Maximize, User, Flag } from "lucide-react";
 import { Donation, categoryDisplayNames } from "@/types/receiverDashboard";
 import { StatusBadge } from "./StatusBadge";
@@ -29,7 +28,6 @@ export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
   const [showDonorInfo, setShowDonorInfo] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
 
-  // Update timer every second for food items with expiry time
   useEffect(() => {
     if (donation.category === 'food' && donation.expiry_time) {
       const interval = setInterval(() => {
