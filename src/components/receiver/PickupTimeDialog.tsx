@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,11 +27,11 @@ export function PickupTimeDialog({ isOpen, onOpenChange, onConfirm, itemName }: 
   };
   
   // Set default pickup time when dialog opens
-  useState(() => {
+  useEffect(() => {
     if (isOpen) {
       setPickupTime(getDefaultPickupTime());
     }
-  });
+  }, [isOpen]);
 
   const handleSubmit = async () => {
     if (!pickupTime) return;

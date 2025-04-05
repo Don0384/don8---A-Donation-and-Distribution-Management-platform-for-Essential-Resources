@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Clock, Trash, User, Flag } from "lucide-react";
 import { formatTimeRemaining } from "@/utils/dateUtils";
@@ -61,10 +60,8 @@ export default function DonationCard({
   
   const canDelete = status === "pending";
   
-  // Format date
   const formattedDate = new Date(createdAt).toLocaleDateString();
   
-  // Get sorted pickup requests
   const sortedRequests = [...pickupRequests].sort((a, b) => 
     new Date(a.pickup_time).getTime() - new Date(b.pickup_time).getTime()
   );

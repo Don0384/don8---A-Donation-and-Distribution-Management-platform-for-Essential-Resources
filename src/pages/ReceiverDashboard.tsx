@@ -1,19 +1,13 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Donation } from "@/types/receiverDashboard";
-import { format } from 'date-fns';
 import Navbar from "@/components/Navbar";
-import { ReceiverDashboardHeader } from "@/components/receiver/ReceiverDashboardHeader";
 import { DonationCard } from "@/components/receiver/DonationCard";
-import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIcon } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as ShadCalendar } from "@/components/ui/calendar";
+import { PickupTimeDialog } from "@/components/receiver/PickupTimeDialog";
 import { useReceiverDonations } from "@/hooks/useReceiverDonations";
 
 const ReceiverDashboard = () => {
@@ -22,7 +16,7 @@ const ReceiverDashboard = () => {
   const { toast } = useToast();
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
   const [isSubmittingDonation, setIsSubmittingDonation] = useState(false);
-  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [showPickupDialog, setShowPickupDialog] = useState(false);
 
   const { 
     donations, 
@@ -36,7 +30,7 @@ const ReceiverDashboard = () => {
     if (user) {
       fetchDonations('pending');
     }
-  }, [user]);
+  }, [user, fetchDonations]);
 
   const handleAcceptDonation = async (donationId: number, pickupTime: string) => {
     try {
@@ -85,6 +79,7 @@ const ReceiverDashboard = () => {
     } finally {
       setIsSubmittingDonation(false);
       setSelectedDonation(null);
+      setShowPickupDialog(false);
     }
   };
 
@@ -114,10 +109,7 @@ const ReceiverDashboard = () => {
 
   const handleOpenDonation = (donation: Donation) => {
     setSelectedDonation(donation);
-  };
-
-  const handleCloseDonation = () => {
-    setSelectedDonation(null);
+    setShowPickupDialog(true);
   };
 
   const handleUpdateStatus = async (donationId: number, status: 'received' | 'rejected') => {
@@ -140,7 +132,9 @@ const ReceiverDashboard = () => {
       <Navbar />
       <div className="flex-1 p-4">
         <div className="max-w-6xl mx-auto">
-          <ReceiverDashboardHeader title="Available Donations" />
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">Available Donations</h1>
+          </div>
 
           {isLoading ? (
             <div className="flex justify-center items-center py-12">
@@ -169,94 +163,12 @@ const ReceiverDashboard = () => {
       </div>
 
       {selectedDonation && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50">
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="relative bg-white rounded-lg max-w-2xl mx-auto p-6">
-              <button
-                onClick={handleCloseDonation}
-                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-              >
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-
-              <h2 className="text-2xl font-bold mb-4">{selectedDonation.item_name}</h2>
-              <p className="text-gray-600 mb-4">{selectedDonation.description}</p>
-
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Pickup Time</h3>
-                <p className="text-gray-600">Select a date for pickup:</p>
-
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className={
-                        "w-[240px] justify-start text-left font-normal" +
-                        (!date ? " text-muted-foreground" : "")
-                      }
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date ? format(date, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <ShadCalendar
-                      mode="single"
-                      selected={date}
-                      onSelect={setDate}
-                      disabled={(date) =>
-                        date < new Date()
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button variant="secondary" onClick={handleCloseDonation}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => {
-                    if (date) {
-                      const pickupTime = date.toISOString();
-                      handleAcceptDonation(selectedDonation.id, pickupTime);
-                    } else {
-                      toast({
-                        title: "Error",
-                        description: "Please select a pickup date.",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                  disabled={isSubmittingDonation}
-                >
-                  Accept Donation
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => handleRejectDonation(selectedDonation.id)}
-                  disabled={isSubmittingDonation}
-                >
-                  Reject Donation
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <PickupTimeDialog
+          isOpen={showPickupDialog}
+          onOpenChange={setShowPickupDialog}
+          onConfirm={(pickupTime) => handleAcceptDonation(selectedDonation.id, pickupTime)}
+          itemName={selectedDonation.item_name}
+        />
       )}
     </div>
   );
