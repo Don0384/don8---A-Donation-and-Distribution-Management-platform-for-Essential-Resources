@@ -47,6 +47,13 @@ const Auth = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Function to validate email
+  const isValidEmail = (email: string): boolean => {
+    // Regular expression for general email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -62,6 +69,11 @@ const Auth = () => {
         // Validate required fields for signup
         if (!formData.email || !formData.password || !formData.firstName || !formData.lastName || !formData.phone) {
           throw new Error("All fields are required");
+        }
+        
+        // Validate email format
+        if (!isValidEmail(formData.email)) {
+          throw new Error("Please enter a valid email address");
         }
         
         await signUp({

@@ -9,6 +9,13 @@ export interface DonationUser {
   phone: string | null;
 }
 
+export interface PickupRequest {
+  user_id: string;
+  donation_id: number;
+  pickup_time: string;
+  created_at: string;
+}
+
 export interface DonationWithProfiles {
   id: number;
   item_name: string;
@@ -24,4 +31,6 @@ export interface DonationWithProfiles {
   receiver: DonationUser | null;
   expiry_time: string | null;
   images: string[] | null;
+  pickup_requests?: PickupRequest[];
+  acceptance_deadline?: string | null;
 }

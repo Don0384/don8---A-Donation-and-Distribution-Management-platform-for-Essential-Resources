@@ -5,21 +5,27 @@ import Navbar from "@/components/Navbar";
 import { FilterControls } from "@/components/receiver/FilterControls";
 import { DonationsList } from "@/components/receiver/DonationsList";
 import { DonationConfirmationDialog } from "@/components/receiver/DonationConfirmationDialog";
+import { PickupTimeDialog } from "@/components/receiver/PickupTimeDialog";
 import { useReceiverDonations } from "@/hooks/useReceiverDonations";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Edit } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const ReceiverDashboard = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [pickupDialogOpen, setPickupDialogOpen] = useState(false);
   const [selectedDonation, setSelectedDonation] = useState<{
     id: number;
     action: 'received' | null;
+    name?: string;
   }>({ id: 0, action: null });
 
   const { unreadDonationCount, markDonationsSeen } = useNotifications("receiver");
@@ -45,9 +51,59 @@ const ReceiverDashboard = () => {
     }
   }, [selectedStatus, user?.id]);
 
-  const openConfirmDialog = (donationId: number, action: 'received' | 'rejected') => {
-    setSelectedDonation({ id: donationId, action: 'received' });
-    setDialogOpen(true);
+  const openPickupDialog = (donationId: number, action: 'received' | 'rejected', name: string) => {
+    setSelectedDonation({ id: donationId, action, name });
+    setPickupDialogOpen(true);
+  };
+
+  const handlePickupTimeSubmit = async (pickupTime: string) => {
+    if (!selectedDonation.id || !user) return;
+    
+    try {
+      // First, store the pickup request
+      const { error: insertError } = await supabase
+        .from('pickup_requests')
+        .insert({
+          donation_id: selectedDonation.id,
+          user_id: user.id,
+          pickup_time: pickupTime
+        });
+        
+      if (insertError) throw insertError;
+      
+      toast({
+        title: "Request submitted",
+        description: "Your pickup time has been submitted and the donor will be notified.",
+      });
+      
+      // Update the donation to show the request
+      const updatedDonation = donations.find(d => d.id === selectedDonation.id);
+      if (updatedDonation) {
+        const donation = {
+          ...updatedDonation,
+          pickup_requests: [
+            ...updatedDonation.pickup_requests || [],
+            {
+              user_id: user.id,
+              donation_id: selectedDonation.id,
+              pickup_time: pickupTime,
+              created_at: new Date().toISOString()
+            }
+          ]
+        };
+        
+        setDonations(prev => 
+          prev.map(d => d.id === selectedDonation.id ? donation : d)
+        );
+      }
+    } catch (error: any) {
+      console.error("Error submitting pickup time:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit pickup time. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleStatusChange = async () => {
@@ -131,7 +187,12 @@ const ReceiverDashboard = () => {
             error={error}
             filteredDonations={filteredDonations}
             selectedStatus={selectedStatus}
-            onAction={openConfirmDialog}
+            onAction={(id, action) => {
+              const donation = donations.find(d => d.id === id);
+              if (donation) {
+                openPickupDialog(id, action, donation.item_name);
+              }
+            }}
           />
         </div>
       </div>
@@ -151,6 +212,13 @@ const ReceiverDashboard = () => {
         onOpenChange={setDialogOpen}
         onConfirm={handleStatusChange}
         action={selectedDonation.action}
+      />
+      
+      <PickupTimeDialog
+        isOpen={pickupDialogOpen}
+        onOpenChange={setPickupDialogOpen}
+        onConfirm={handlePickupTimeSubmit}
+        itemName={selectedDonation.name || "this donation"}
       />
     </div>
   );

@@ -1,10 +1,11 @@
 
-import { Clock, Package, Check, X, Image as ImageIcon, Maximize } from "lucide-react";
+import { Clock, Package, Check, X, Image as ImageIcon, Maximize, User } from "lucide-react";
 import { Donation, categoryDisplayNames } from "@/types/receiverDashboard";
 import { StatusBadge } from "./StatusBadge";
 import { formatDate, formatTimeRemaining } from "@/utils/dateUtils";
 import { useEffect, useState } from "react";
 import { ImageGallery } from "./ImageGallery";
+import { UserContactInfo } from "@/components/UserContactInfo";
 
 interface DonationItemProps {
   donation: Donation;
@@ -22,6 +23,7 @@ export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
   
   const [showGallery, setShowGallery] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [showDonorInfo, setShowDonorInfo] = useState(false);
 
   // Update timer every second for food items with expiry time
   useEffect(() => {
@@ -99,6 +101,24 @@ export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
                   <p className="text-xs text-gray-500 mt-1">
                     This food item {isExpired ? 'was' : 'will be'} fresh until {new Date(donation.expiry_time).toLocaleString()}
                   </p>
+                </div>
+              )}
+              
+              {donation.status === 'received' && donation.donor && (
+                <div className="mt-3">
+                  <button
+                    onClick={() => setShowDonorInfo(!showDonorInfo)}
+                    className="flex items-center text-blue-600 hover:underline"
+                  >
+                    <User className="w-4 h-4 mr-1" />
+                    {showDonorInfo ? 'Hide' : 'Show'} donor information
+                  </button>
+                  
+                  {showDonorInfo && (
+                    <div className="mt-2">
+                      <UserContactInfo user={donation.donor} title="Donor" />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
