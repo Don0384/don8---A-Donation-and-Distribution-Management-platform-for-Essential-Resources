@@ -43,23 +43,22 @@ export const useReceiverDonations = (userId: string | undefined) => {
       
       if (error) throw error;
       
-      // Get pickup requests for each donation
+      // Get pickup requests for each donation using type casting to work around TypeScript issues
       const enhancedData = await Promise.all((data || []).map(async (donation) => {
-        // @ts-ignore - This table exists but TypeScript doesn't know about it yet
-        const { data: pickupRequests } = await supabase
-          .from('pickup_requests')
+        const { data: pickupRequests } = await (supabase
+          .from('pickup_requests' as any)
           .select('*')
           .eq('donation_id', donation.id)
-          .order('pickup_time', { ascending: true });
+          .order('pickup_time', { ascending: true }) as any);
         
         return {
           ...donation,
           images: donation.images || [],
           pickup_requests: pickupRequests || []
-        };
+        } as Donation;
       }));
       
-      setDonations(enhancedData as Donation[]);
+      setDonations(enhancedData);
     } catch (err: any) {
       console.error('Error fetching donations:', err);
       setError(err.message);

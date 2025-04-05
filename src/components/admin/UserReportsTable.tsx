@@ -3,36 +3,16 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Ban, Check, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface Report {
-  id: number;
-  reported_user_id: string;
-  reporter_user_id: string;
-  reason: string;
-  status: 'pending' | 'resolved' | 'dismissed';
-  created_at: string;
-  reported_user: {
-    email: string;
-    first_name: string | null;
-    last_name: string | null;
-    user_type: string;
-  } | null;
-  reporter_user: {
-    email: string;
-    first_name: string | null;
-    last_name: string | null;
-    user_type: string;
-  } | null;
-}
+import { UserReport } from "@/types/receiverDashboard";
 
 export function UserReportsTable() {
-  const [reports, setReports] = useState<Report[]>([]);
+  const [reports, setReports] = useState<UserReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionType, setActionType] = useState<'resolve' | 'dismiss' | 'ban' | null>(null);
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [selectedReport, setSelectedReport] = useState<UserReport | null>(null);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const { toast } = useToast();
   
@@ -44,10 +24,9 @@ export function UserReportsTable() {
     try {
       setLoading(true);
       
-      // Get all reports with user details
-      // @ts-ignore - This table exists but TypeScript doesn't know about it yet
-      const { data, error } = await supabase
-        .from('user_reports')
+      // Use type casting to bypass TypeScript type checking for now
+      const { data, error } = await (supabase
+        .from('user_reports' as any)
         .select(`
           *,
           reported_user:reported_user_id(
@@ -62,12 +41,12 @@ export function UserReportsTable() {
             last_name:raw_user_meta_data->last_name,
             user_type:raw_user_meta_data->user_type
           )
-        `)
+        `) as any)
         .order('created_at', { ascending: false });
         
       if (error) throw error;
       
-      setReports(data as Report[] || []);
+      setReports(data || []);
     } catch (error) {
       console.error("Error fetching reports:", error);
       toast({
@@ -80,7 +59,7 @@ export function UserReportsTable() {
     }
   };
   
-  const handleAction = (report: Report, action: 'resolve' | 'dismiss' | 'ban') => {
+  const handleAction = (report: UserReport, action: 'resolve' | 'dismiss' | 'ban') => {
     setSelectedReport(report);
     setActionType(action);
     setIsConfirmDialogOpen(true);
@@ -92,17 +71,16 @@ export function UserReportsTable() {
     try {
       if (actionType === 'ban') {
         // First, update the report status
-        // @ts-ignore - This table exists but TypeScript doesn't know about it yet
-        const { error: reportError } = await supabase
-          .from('user_reports')
+        const { error: reportError } = await (supabase
+          .from('user_reports' as any)
           .update({ status: 'resolved' })
-          .eq('id', selectedReport.id);
+          .eq('id', selectedReport.id) as any);
           
         if (reportError) throw reportError;
         
         // Then delete the user (would require admin privileges)
         // In real-world, this might flag the user as banned instead
-        const { error: userError } = await supabase.auth.admin.deleteUser(
+        const { error: userError } = await (supabase.auth as any).admin.deleteUser(
           selectedReport.reported_user_id
         );
         
@@ -114,11 +92,10 @@ export function UserReportsTable() {
         });
       } else {
         // Just update the report status
-        // @ts-ignore - This table exists but TypeScript doesn't know about it yet
-        const { error } = await supabase
-          .from('user_reports')
+        const { error } = await (supabase
+          .from('user_reports' as any)
           .update({ status: actionType === 'resolve' ? 'resolved' : 'dismissed' })
-          .eq('id', selectedReport.id);
+          .eq('id', selectedReport.id) as any);
           
         if (error) throw error;
         

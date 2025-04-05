@@ -44,8 +44,8 @@ const AdminDashboard = () => {
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
                 <h2 className="text-xl font-bold">All Donations</h2>
                 <StatusFilter
-                  selectedStatus={statusFilter}
-                  onStatusChange={setStatusFilter}
+                  value={statusFilter || "all"}
+                  onValueChange={setStatusFilter}
                 />
               </div>
               

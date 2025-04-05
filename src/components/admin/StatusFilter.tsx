@@ -8,13 +8,19 @@ import {
 } from "@/components/ui/select";
 
 interface StatusFilterProps {
-  value: string;
-  onValueChange: (value: string) => void;
+  value?: string;
+  onValueChange?: (value: string) => void;
+  selectedStatus?: string;
+  onStatusChange?: (status: string) => void;
 }
 
-const StatusFilter = ({ value, onValueChange }: StatusFilterProps) => {
+const StatusFilter = ({ value, onValueChange, selectedStatus, onStatusChange }: StatusFilterProps) => {
+  // Use either the new or old prop names
+  const currentValue = value || selectedStatus || "all";
+  const handleChange = onValueChange || onStatusChange || (() => {});
+
   return (
-    <Select value={value} onValueChange={onValueChange}>
+    <Select value={currentValue} onValueChange={handleChange}>
       <SelectTrigger className="w-[180px]">
         <SelectValue placeholder="All statuses" />
       </SelectTrigger>

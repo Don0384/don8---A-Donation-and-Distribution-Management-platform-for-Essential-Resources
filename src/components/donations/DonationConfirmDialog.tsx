@@ -9,101 +9,45 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Clock, AlertTriangle } from "lucide-react";
-import { useState } from "react";
 
 interface DonationConfirmDialogProps {
   isOpen: boolean;
-  onClose: () => void;
-  onConfirm: (expiryTime?: string) => void;
-  itemName: string;
-  isFood: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+  title: string;
+  description: string;
+  confirmText?: string;
+  confirmVariant?: string;
 }
 
-export function DonationConfirmDialog({
+export const DonationConfirmDialog = ({
   isOpen,
-  onClose,
+  onOpenChange,
   onConfirm,
-  itemName,
-  isFood,
-}: DonationConfirmDialogProps) {
-  const [expiryTime, setExpiryTime] = useState("");
-  const [timeError, setTimeError] = useState<string | null>(null);
-
-  const handleConfirm = () => {
-    if (isFood && !expiryTime) {
-      setTimeError("Please set an expiry time for food donations");
-      return;
-    }
-    onConfirm(isFood ? expiryTime : undefined);
-  };
-
-  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setExpiryTime(value);
-    
-    // Only validate if there's actual input
-    if (value) {
-      // Regular expression to validate HH:MM:SS format (24-hour)
-      const timeRegex = /^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
-      
-      if (!timeRegex.test(value)) {
-        setTimeError("Please use the format HH:MM:SS (e.g., 02:30:00)");
-      } else {
-        setTimeError(null);
-      }
-    } else {
-      setTimeError(null);
-    }
-  };
-
+  title,
+  description,
+  confirmText = "Confirm",
+  confirmVariant = "default"
+}: DonationConfirmDialogProps) => {
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
+    <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirm Donation</AlertDialogTitle>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to donate {itemName}?
+            {description}
           </AlertDialogDescription>
         </AlertDialogHeader>
-
-        {isFood && (
-          <div className="flex flex-col space-y-2 my-4">
-            <div className="flex items-center space-x-2">
-              <Clock className="h-4 w-4 text-gray-500" />
-              <span className="text-sm font-medium">Set expiry time (24h format)</span>
-            </div>
-            
-            <div className="flex flex-col space-y-1">
-              <Input
-                type="text"
-                placeholder="HH:MM:SS"
-                value={expiryTime}
-                onChange={handleTimeChange}
-                className={`w-full ${timeError ? 'border-red-500' : ''}`}
-                required={isFood}
-              />
-              
-              {timeError && (
-                <div className="flex items-center space-x-1 text-xs text-red-500">
-                  <AlertTriangle className="h-3 w-3" />
-                  <span>{timeError}</span>
-                </div>
-              )}
-              
-              <p className="text-xs text-gray-500">
-                This sets how long the food will remain fresh after pickup.
-              </p>
-            </div>
-          </div>
-        )}
-
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirm}>Confirm</AlertDialogAction>
+          <AlertDialogAction
+            onClick={onConfirm}
+            className={confirmVariant === "destructive" ? "bg-red-600 hover:bg-red-700" : ""}
+          >
+            {confirmText}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
-}
+};

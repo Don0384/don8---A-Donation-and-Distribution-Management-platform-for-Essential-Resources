@@ -44,3 +44,24 @@ export interface Donation {
   acceptance_deadline: string | null;
   pickup_requests: PickupRequest[];
 }
+
+export interface UserReport {
+  id: number;
+  reported_user_id: string;
+  reporter_user_id: string;
+  reason: string;
+  status: 'pending' | 'resolved' | 'dismissed';
+  created_at: string;
+  reported_user?: {
+    email: string;
+    first_name: string | null;
+    last_name: string | null;
+    user_type: string;
+  } | null;
+  reporter_user?: {
+    email: string;
+    first_name: string | null;
+    last_name: string | null;
+    user_type: string;
+  } | null;
+}

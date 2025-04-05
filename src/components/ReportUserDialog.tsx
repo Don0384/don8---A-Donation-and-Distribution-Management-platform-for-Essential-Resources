@@ -38,15 +38,15 @@ export function ReportUserDialog({
     
     setIsSubmitting(true);
     try {
-      // @ts-ignore - This table exists but TypeScript doesn't know about it yet
-      const { error } = await supabase
-        .from('user_reports')
+      // Use "as any" to bypass TypeScript type checking for now
+      const { error } = await (supabase
+        .from('user_reports' as any)
         .insert({
           reported_user_id: reportedUserId,
           reporter_user_id: reporterUserId,
           reason,
           status: 'pending'
-        });
+        } as any));
         
       if (error) throw error;
       

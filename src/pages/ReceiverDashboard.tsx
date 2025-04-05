@@ -61,14 +61,13 @@ const ReceiverDashboard = () => {
     
     try {
       // First, store the pickup request
-      // @ts-ignore - This table exists but TypeScript doesn't know about it yet
-      const { error: insertError } = await supabase
-        .from('pickup_requests')
+      const { error: insertError } = await (supabase
+        .from('pickup_requests' as any)
         .insert({
           donation_id: selectedDonation.id,
           user_id: user.id,
           pickup_time: pickupTime
-        });
+        } as any));
         
       if (insertError) throw insertError;
       
