@@ -31,19 +31,36 @@ const DonorInbox = () => {
       try {
         setIsLoading(true);
         
-        // Efficiently fetch messages with a single query
+        // Get messages
         const { data: messageData, error: messageError } = await supabase
           .from('messages')
-          .select('*, profiles:user_id(first_name, last_name)')
+          .select('*')
           .order('created_at', { ascending: false });
           
         if (messageError) throw messageError;
         
         if (!isMounted) return;
         
-        // Transform the data to match our expected Message type
-        const transformedMessages = messageData.map(message => {
-          const profileData = message.profiles;
+        // For each message, get the profile data separately
+        const transformedMessages = await Promise.all(messageData.map(async (message) => {
+          // Get profile data in a separate query
+          let senderName = message.user_type === 'receiver' ? 'Receiver' : 'Donor';
+          
+          if (message.user_id) {
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('first_name, last_name')
+              .eq('id', message.user_id)
+              .single();
+              
+            if (profileData && !profileError) {
+              senderName = `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim();
+              if (!senderName) {
+                senderName = message.user_type === 'receiver' ? 'Receiver' : 'Donor';
+              }
+            }
+          }
+          
           return {
             id: message.id,
             user_id: message.user_id,
@@ -53,11 +70,9 @@ const DonorInbox = () => {
               ? message.user_type as 'donor' | 'receiver' 
               : 'donor',
             is_read: message.is_read,
-            sender_name: profileData 
-              ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() 
-              : (message.user_type === 'receiver' ? 'Receiver' : 'Donor')
+            sender_name: senderName
           } as Message;
-        });
+        }));
         
         setMessages(transformedMessages);
         
@@ -118,16 +133,23 @@ const DonorInbox = () => {
         
         // Only process if it's relevant to this user
         if (payload.new.user_type === 'receiver') {
-          // Get sender profile data
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('first_name, last_name')
-            .eq('id', payload.new.user_id)
-            .single();
-            
-          const senderName = profileData 
-            ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() 
-            : 'Receiver';
+          // Get sender profile data in a separate query
+          let senderName = 'Receiver';
+          
+          if (payload.new.user_id) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('first_name, last_name')
+              .eq('id', payload.new.user_id)
+              .single();
+              
+            if (profileData) {
+              senderName = `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim();
+              if (!senderName) {
+                senderName = 'Receiver';
+              }
+            }
+          }
             
           // Add the new message to our state
           const newMessage: Message = {
