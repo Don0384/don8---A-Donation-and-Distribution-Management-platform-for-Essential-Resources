@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatTimeRemaining } from "@/utils/dateUtils";
 import { useAuth } from "@/context/AuthContext";
 import { setupDonationDeleteListener } from "@/services/donationService";
-import { DonationUser } from "@/types/donations";
 import { DonorDonation } from "@/types/donorDashboard";
 
 export const useDonorDonations = () => {
@@ -21,39 +20,56 @@ export const useDonorDonations = () => {
     async function fetchDonations() {
       try {
         setIsLoading(true);
+        
+        // First get all donations
         const { data, error } = await supabase
           .from('donations')
-          .select(`
-            *,
-            receiver:receiver_id(
-              id:id,
-              email:email,
-              first_name:raw_user_meta_data->first_name,
-              last_name:raw_user_meta_data->last_name,
-              phone:raw_user_meta_data->phone
-            )
-          `)
+          .select('*')
           .eq('donor_id', user.id)
           .order('created_at', { ascending: false });
         
         if (error) throw error;
         
-        // Get pickup requests for each donation using type assertion
-        const enhancedData = await Promise.all((data || []).map(async (donation) => {
-          // Use type assertion to tell TypeScript this is safe
+        // Manually join the receiver information
+        const donationsWithReceivers = await Promise.all((data || []).map(async (donation) => {
+          let receiver = null;
+          
+          if (donation.receiver_id) {
+            // Get profile info for the receiver
+            const { data: receiverProfile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', donation.receiver_id)
+              .single();
+              
+            if (receiverProfile) {
+              // Get user auth data for email
+              receiver = {
+                id: donation.receiver_id,
+                email: receiverProfile.username || "",
+                first_name: receiverProfile.first_name,
+                last_name: receiverProfile.last_name,
+                phone: null // We don't have phone in profile currently
+              };
+            }
+          }
+          
+          // Get pickup requests for this donation
           const { data: pickupRequests } = await supabase
             .from('pickup_requests')
             .select('*')
             .eq('donation_id', donation.id)
-            .order('pickup_time', { ascending: true }) as any;
+            .order('pickup_time', { ascending: true });
             
+          // Construct the enhanced donation with receiver and pickup requests
           return {
             ...donation,
+            receiver,
             pickup_requests: pickupRequests || []
           } as DonorDonation;
         }));
         
-        setDonations(enhancedData);
+        setDonations(donationsWithReceivers);
         
         // Initialize time remaining for food items
         const initialTimeMap: Record<number, string | null> = {};

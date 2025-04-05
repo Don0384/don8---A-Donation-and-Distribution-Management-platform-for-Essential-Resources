@@ -1,163 +1,210 @@
-
 import { useState, useEffect } from "react";
-import { useAuth } from "@/context/AuthContext";
-import Navbar from "@/components/Navbar";
-import { FilterControls } from "@/components/receiver/FilterControls";
-import { DonationsList } from "@/components/receiver/DonationsList";
-import { DonationConfirmationDialog } from "@/components/receiver/DonationConfirmationDialog";
-import { PickupTimeDialog } from "@/components/receiver/PickupTimeDialog";
-import { useReceiverDonations } from "@/hooks/useReceiverDonations";
-import { useNotifications } from "@/hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
-import { Edit } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { Calendar } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Donation } from "@/types/receiverDashboard";
+import { format } from 'date-fns';
+import Navbar from "@/components/Navbar";
+import { ReceiverDashboardHeader } from "@/components/receiver/ReceiverDashboardHeader";
+import { DonationCard } from "@/components/receiver/DonationCard";
+import { Button } from "@/components/ui/button";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as ShadCalendar } from "@/components/ui/calendar";
 
 const ReceiverDashboard = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedStatus, setSelectedStatus] = useState("All");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [pickupDialogOpen, setPickupDialogOpen] = useState(false);
-  const [selectedDonation, setSelectedDonation] = useState<{
-    id: number;
-    action: 'received' | 'rejected' | null;
-    name?: string;
-  }>({ id: 0, action: null });
+  const { toast } = useToast();
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
+  const [isSubmittingDonation, setIsSubmittingDonation] = useState(false);
+  const [date, setDate] = useState<Date | undefined>(new Date());
 
-  const { unreadDonationCount, markDonationsSeen } = useNotifications("receiver");
-
-  const {
-    donations,
-    isLoading,
-    error,
-    fetchDonations,
-    updateDonationStatus,
-    setDonations
-  } = useReceiverDonations(user?.id);
-
-  // Only fetch donations when user changes or status changes
   useEffect(() => {
-    if (!user) return;
-    
-    fetchDonations(selectedStatus);
-    
-    // Mark donations as seen when viewing pending donations
-    if (selectedStatus === "pending" || selectedStatus === "All") {
-      markDonationsSeen();
+    async function fetchDonations() {
+      if (!user) return;
+
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('donations')
+          .select('*')
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Manually join donor information and pickup requests
+        const enhancedData = await Promise.all((data || []).map(async (donation) => {
+          // Get donor details
+          let donor = null;
+          if (donation.donor_id) {
+            const { data: donorProfile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', donation.donor_id)
+              .single();
+
+            if (donorProfile) {
+              // Get user auth data for email
+              const { data: userData } = await supabase.auth.admin.getUserById(donation.donor_id);
+
+              donor = {
+                id: donation.donor_id,
+                email: userData?.user?.email || "",
+                first_name: donorProfile.first_name,
+                last_name: donorProfile.last_name,
+                phone: userData?.user?.user_metadata?.phone || null
+              };
+            }
+          }
+
+          // Get pickup requests
+          const { data: pickupRequests } = await supabase
+            .from('pickup_requests')
+            .select('*')
+            .eq('donation_id', donation.id)
+            .order('pickup_time', { ascending: true });
+
+          return {
+            ...donation,
+            donor,
+            images: donation.images || [],
+            pickup_requests: pickupRequests || []
+          } as Donation;
+        }));
+
+        setDonations(enhancedData);
+      } catch (err: any) {
+        console.error('Error fetching donations:', err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
     }
-  }, [selectedStatus, user?.id]);
 
-  const openPickupDialog = (donationId: number, action: 'received' | 'rejected', name: string) => {
-    setSelectedDonation({ id: donationId, action, name });
-    setPickupDialogOpen(true);
-  };
+    fetchDonations();
+  }, [user]);
 
-  const handlePickupTimeSubmit = async (pickupTime: string) => {
-    if (!selectedDonation.id || !user) return;
-    
+  // Fix the updateDonationStatus type in line 55 to accept both 'received' and 'rejected'
+  const handleAcceptDonation = async (donationId: number, pickupTime: string) => {
     try {
-      // First, store the pickup request using type assertion
-      const { error: insertError } = await supabase
+      setIsSubmittingDonation(true);
+      // First insert the pickup request
+      const { error: pickupError } = await supabase
         .from('pickup_requests')
         .insert({
-          donation_id: selectedDonation.id,
-          user_id: user.id,
-          pickup_time: pickupTime
-        }) as any;
-        
-      if (insertError) throw insertError;
-      
-      toast({
-        title: "Request submitted",
-        description: "Your pickup time has been submitted and the donor will be notified.",
+          donation_id: donationId,
+          user_id: user?.id,
+          pickup_time: pickupTime,
+        });
+
+      if (pickupError) throw pickupError;
+
+      // Update UI
+      setDonations((prevDonations) => {
+        return prevDonations.map((d) => {
+          if (d.id === donationId) {
+            // Add the new pickup request to the donation's pickup_requests array
+            const updatedPickupRequests = [
+              ...(d.pickup_requests || []),
+              {
+                user_id: user?.id || '',
+                pickup_time: pickupTime,
+                created_at: new Date().toISOString(),
+                donation_id: donationId,
+              },
+            ];
+            return { ...d, pickup_requests: updatedPickupRequests };
+          }
+          return d;
+        });
       });
-      
-      // Update the donation to show the request
-      const updatedDonation = donations.find(d => d.id === selectedDonation.id);
-      if (updatedDonation) {
-        const pickupRequests = Array.isArray(updatedDonation.pickup_requests) 
-          ? updatedDonation.pickup_requests 
-          : [];
-          
-        const donation = {
-          ...updatedDonation,
-          pickup_requests: [
-            ...pickupRequests,
-            {
-              user_id: user.id,
-              donation_id: selectedDonation.id,
-              pickup_time: pickupTime,
-              created_at: new Date().toISOString()
-            }
-          ]
-        };
-        
-        setDonations(prev => 
-          prev.map(d => d.id === selectedDonation.id ? donation : d)
-        );
-      }
-      
-      // Now continue with accepting the donation
-      setDialogOpen(true);
-    } catch (error: any) {
-      console.error("Error submitting pickup time:", error);
+
+      toast({
+        title: "Pickup request submitted",
+        description:
+          "Your pickup request has been sent to the donor. We'll notify you when it's accepted.",
+      });
+    } catch (err: any) {
+      console.error("Error submitting pickup request:", err);
       toast({
         title: "Error",
-        description: "Failed to submit pickup time. Please try again.",
+        description: "Failed to submit pickup request. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmittingDonation(false);
+      setSelectedDonation(null);
     }
   };
 
-  const handleStatusChange = async () => {
-    if (!selectedDonation.action || !user) return;
-    
-    const success = await updateDonationStatus(selectedDonation.id, selectedDonation.action);
-    
-    if (success) {
-      if (selectedStatus === 'All') {
-        setDonations(prev => 
-          prev.map(donation => 
-            donation.id === selectedDonation.id
-              ? { ...donation, status: selectedDonation.action as string, receiver_id: user.id }
-              : donation
+  const handleRejectDonation = async (donationId: number) => {
+    if (!user) return;
+
+    try {
+      setIsSubmittingDonation(true);
+      const { error } = await supabase
+        .from('donations')
+        .update({ status: 'rejected', receiver_id: user.id })
+        .eq('id', donationId);
+
+      if (error) throw error;
+
+      setDonations((prevDonations) =>
+        prevDonations.map((d) =>
+          d.id === donationId ? { ...d, status: 'rejected' } : d
+        )
+      );
+
+      toast({
+        title: "Donation Rejected",
+        description: "You have rejected this donation.",
+      });
+    } catch (err: any) {
+      console.error("Error rejecting donation:", err);
+      toast({
+        title: "Error",
+        description: "Failed to reject donation. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingDonation(false);
+      setSelectedDonation(null);
+    }
+  };
+
+  const handleOpenDonation = (donation: Donation) => {
+    setSelectedDonation(donation);
+  };
+
+  const handleCloseDonation = () => {
+    setSelectedDonation(null);
+  };
+
+  // Fix the issue when handling donation status updates (line 221)
+  const handleUpdateStatus = async (donationId: number, status: 'received' | 'rejected') => {
+    try {
+      setIsSubmittingDonation(true);
+      const success = await updateDonationStatus(donationId, status);
+      if (success) {
+        // Update local state
+        setDonations((prevDonations) =>
+          prevDonations.map((d) =>
+            d.id === donationId ? { ...d, status } : d
           )
         );
-      } else if (selectedStatus === 'pending') {
-        setDonations(prev => 
-          prev.filter(donation => donation.id !== selectedDonation.id)
-        );
       }
-      
-      if (selectedStatus === selectedDonation.action) {
-        setTimeout(() => {
-          fetchDonations(selectedStatus);
-        }, 500);
-      }
-    }
-    
-    setDialogOpen(false);
-    setSelectedDonation({ id: 0, action: null });
-  };
-
-  const filteredDonations = donations.filter(donation => 
-    (selectedCategory === "All" || donation.category === selectedCategory)
-  );
-
-  const getStatusTitle = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'Available Donations';
-      case 'received':
-        return 'Accepted Donations';
-      case 'rejected':
-        return 'Rejected Donations';
-      default:
-        return 'All Donations';
+    } catch (err) {
+      console.error("Error updating donation status:", err);
+    } finally {
+      setIsSubmittingDonation(false);
+      setSelectedDonation(null);
     }
   };
 
@@ -166,67 +213,124 @@ const ReceiverDashboard = () => {
       <Navbar />
       <div className="flex-1 p-4">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">
-              {getStatusTitle(selectedStatus)}
-              
-              {unreadDonationCount > 0 && selectedStatus !== "pending" && (
-                <span className="ml-3 inline-flex">
-                  <Badge variant="destructive" className="text-xs">
-                    {unreadDonationCount} new
-                  </Badge>
-                </span>
-              )}
-            </h1>
-            
-            <div className="flex items-center gap-4">
-              <FilterControls
-                selectedCategory={selectedCategory}
-                setSelectedCategory={setSelectedCategory}
-                selectedStatus={selectedStatus}
-                setSelectedStatus={setSelectedStatus}
-              />
+          <ReceiverDashboardHeader title="Available Donations" />
+
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
             </div>
-          </div>
-          
-          <DonationsList
-            isLoading={isLoading}
-            error={error}
-            filteredDonations={filteredDonations}
-            selectedStatus={selectedStatus}
-            onAction={(id, action) => {
-              const donation = donations.find(d => d.id === id);
-              if (donation) {
-                openPickupDialog(id, action as 'received', donation.item_name);
-              }
-            }}
-          />
+          ) : error ? (
+            <div className="text-center py-8">
+              <p className="text-red-500">{error}</p>
+            </div>
+          ) : donations.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No donations available at the moment.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {donations.map((donation) => (
+                <DonationCard
+                  key={donation.id}
+                  donation={donation}
+                  onOpen={() => handleOpenDonation(donation)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="fixed bottom-6 right-6">
-        <button
-          onClick={() => navigate("/receiver/message")}
-          className="w-14 h-14 bg-receiver-primary hover:bg-receiver-hover text-white rounded-full flex items-center justify-center shadow-lg transition-colors duration-200"
-          aria-label="Write message"
-        >
-          <Edit className="w-5 h-5" />
-        </button>
-      </div>
+      {selectedDonation && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50">
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="relative bg-white rounded-lg max-w-2xl mx-auto p-6">
+              <button
+                onClick={handleCloseDonation}
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+              >
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
 
-      <DonationConfirmationDialog
-        isOpen={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onConfirm={handleStatusChange}
-        action={selectedDonation.action}
-      />
-      
-      <PickupTimeDialog
-        isOpen={pickupDialogOpen}
-        onOpenChange={setPickupDialogOpen}
-        onConfirm={handlePickupTimeSubmit}
-        itemName={selectedDonation.name || "this donation"}
-      />
+              <h2 className="text-2xl font-bold mb-4">{selectedDonation.item_name}</h2>
+              <p className="text-gray-600 mb-4">{selectedDonation.description}</p>
+
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold mb-2">Pickup Time</h3>
+                <p className="text-gray-600">Select a date for pickup:</p>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={
+                        "w-[240px] justify-start text-left font-normal" +
+                        (!date ? " text-muted-foreground" : "")
+                      }
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {date ? format(date, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <ShadCalendar
+                      mode="single"
+                      selected={date}
+                      onSelect={setDate}
+                      disabled={(date) =>
+                        date < new Date()
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <Button variant="secondary" onClick={handleCloseDonation}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (date) {
+                      const pickupTime = date.toISOString();
+                      handleAcceptDonation(selectedDonation.id, pickupTime);
+                    } else {
+                      toast({
+                        title: "Error",
+                        description: "Please select a pickup date.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  disabled={isSubmittingDonation}
+                >
+                  Accept Donation
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleRejectDonation(selectedDonation.id)}
+                  disabled={isSubmittingDonation}
+                >
+                  Reject Donation
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

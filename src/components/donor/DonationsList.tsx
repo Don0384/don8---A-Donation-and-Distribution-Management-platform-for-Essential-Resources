@@ -4,7 +4,7 @@ import DonationCard from "@/components/donor/DonationCard";
 import { DonorDonation } from "@/types/donorDashboard";
 
 interface DonationsListProps {
-  donations: any[];
+  donations: DonorDonation[];
   isLoading: boolean;
   error: string | null;
   timeRemainingMap: Record<number, string | null>;

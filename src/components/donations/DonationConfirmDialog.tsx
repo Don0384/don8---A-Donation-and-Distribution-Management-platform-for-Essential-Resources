@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { type ReactNode } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +18,8 @@ export interface DonationConfirmDialogProps {
   title: string;
   description: string;
   confirmText: string;
-  confirmVariant?: string;
+  confirmVariant: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | null | undefined;
+  children?: ReactNode;
 }
 
 export const DonationConfirmDialog = ({
@@ -28,7 +29,8 @@ export const DonationConfirmDialog = ({
   title,
   description,
   confirmText,
-  confirmVariant = "default"
+  confirmVariant = "default",
+  children
 }: DonationConfirmDialogProps) => {
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
@@ -39,10 +41,11 @@ export const DonationConfirmDialog = ({
             {description}
           </AlertDialogDescription>
         </AlertDialogHeader>
+        {children && <div className="my-4">{children}</div>}
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction 
-            onClick={onConfirm}
+          <AlertDialogAction
+            onClick={onConfirm} 
             className={confirmVariant === "destructive" ? "bg-red-600 hover:bg-red-700" : ""}
           >
             {confirmText}

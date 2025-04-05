@@ -24,8 +24,22 @@ export interface Report {
   reason: string;
   status: string;
   created_at: string;
-  reported_user?: DonationUser;
-  reporter_user?: DonationUser;
+  reported_user?: {
+    id: string;
+    username?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    avatar_url?: string | null;
+    updated_at?: string | null;
+  } | null;
+  reporter_user?: {
+    id: string;
+    username?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    avatar_url?: string | null;
+    updated_at?: string | null;
+  } | null;
 }
 
 export interface DonationWithProfiles {

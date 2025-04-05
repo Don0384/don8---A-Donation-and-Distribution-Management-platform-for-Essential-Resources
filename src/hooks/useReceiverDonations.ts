@@ -19,16 +19,7 @@ export const useReceiverDonations = (userId: string | undefined) => {
       
       let query = supabase
         .from('donations')
-        .select(`
-          *,
-          donor:donor_id(
-            id:id,
-            email:email,
-            first_name:raw_user_meta_data->first_name,
-            last_name:raw_user_meta_data->last_name,
-            phone:raw_user_meta_data->phone
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
       
       if (status !== "All") {
@@ -43,17 +34,38 @@ export const useReceiverDonations = (userId: string | undefined) => {
       
       if (error) throw error;
       
-      // Get pickup requests for each donation using type assertion
+      // Manually join donor information and pickup requests
       const enhancedData = await Promise.all((data || []).map(async (donation) => {
-        // Use type assertion for proper TypeScript compatibility
+        // Get donor details
+        let donor = null;
+        if (donation.donor_id) {
+          const { data: donorProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', donation.donor_id)
+            .single();
+            
+          if (donorProfile) {
+            donor = {
+              id: donation.donor_id,
+              email: donorProfile.username || "",
+              first_name: donorProfile.first_name,
+              last_name: donorProfile.last_name,
+              phone: null // We don't have phone in profile currently
+            };
+          }
+        }
+        
+        // Get pickup requests
         const { data: pickupRequests } = await supabase
           .from('pickup_requests')
           .select('*')
           .eq('donation_id', donation.id)
-          .order('pickup_time', { ascending: true }) as any;
+          .order('pickup_time', { ascending: true });
         
         return {
           ...donation,
+          donor,
           images: donation.images || [],
           pickup_requests: pickupRequests || []
         } as Donation;

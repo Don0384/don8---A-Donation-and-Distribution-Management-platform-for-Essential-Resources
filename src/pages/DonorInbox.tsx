@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -22,84 +23,138 @@ const DonorInbox = () => {
   const { markMessagesSeen } = useNotifications("donor");
 
   useEffect(() => {
+    let isMounted = true;
+    
     async function fetchMessages() {
       if (!user) return;
 
       try {
         setIsLoading(true);
         
-        // First, get all messages
+        // Efficiently fetch messages with a single query
         const { data: messageData, error: messageError } = await supabase
           .from('messages')
-          .select('*')
+          .select('*, profiles:user_id(first_name, last_name)')
           .order('created_at', { ascending: false });
           
         if (messageError) throw messageError;
         
-        // For each message, fetch the profile information separately
-        const messagesWithProfiles = await Promise.all(
-          messageData.map(async (message) => {
-            // Get profile information for the message sender
-            const { data: profileData } = await supabase
-              .from('profiles')
-              .select('first_name, last_name')
-              .eq('id', message.user_id)
-              .single();
-              
-            return {
-              id: message.id,
-              user_id: message.user_id,
-              content: message.content,
-              created_at: message.created_at,
-              // Ensure user_type is properly cast to the required type
-              user_type: (message.user_type === 'donor' || message.user_type === 'receiver') 
-                ? message.user_type as 'donor' | 'receiver' 
-                : 'donor', // Default to 'donor' if it's neither
-              is_read: message.is_read,
-              sender_name: profileData 
-                ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() 
-                : (message.user_type === 'receiver' ? 'Receiver' : 'Donor')
-            } as Message; // Explicitly cast the entire object to Message type
-          })
-        );
+        if (!isMounted) return;
         
-        setMessages(messagesWithProfiles);
+        // Transform the data to match our expected Message type
+        const transformedMessages = messageData.map(message => {
+          const profileData = message.profiles;
+          return {
+            id: message.id,
+            user_id: message.user_id,
+            content: message.content,
+            created_at: message.created_at,
+            user_type: (message.user_type === 'donor' || message.user_type === 'receiver') 
+              ? message.user_type as 'donor' | 'receiver' 
+              : 'donor',
+            is_read: message.is_read,
+            sender_name: profileData 
+              ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() 
+              : (message.user_type === 'receiver' ? 'Receiver' : 'Donor')
+          } as Message;
+        });
+        
+        setMessages(transformedMessages);
         
         // Mark messages as seen in the notifications system
         markMessagesSeen();
         
-        // Mark all messages as read
-        // Only mark as read messages that are not sent by the current user
-        if (messageData && messageData.length > 0) {
-          const messagesToMark = messageData.filter(msg => msg.user_id !== user.id);
+        // Mark all messages as read in a single batch operation
+        const messagesToMark = messageData
+          .filter(msg => msg.user_id !== user.id && !msg.is_read)
+          .map(msg => msg.id);
           
-          if (messagesToMark.length > 0) {
-            const { error: updateError } = await supabase
-              .from('messages')
-              .update({ is_read: true })
-              .in('id', messagesToMark.map(msg => msg.id));
-              
-            if (updateError) {
-              console.error("Error marking messages as read:", updateError);
-            }
+        if (messagesToMark.length > 0) {
+          const { error: updateError } = await supabase
+            .from('messages')
+            .update({ is_read: true })
+            .in('id', messagesToMark);
+            
+          if (updateError) {
+            console.error("Error marking messages as read:", updateError);
           }
         }
         
       } catch (err: any) {
         console.error("Error fetching messages:", err);
-        setError(err.message);
-        toast({
-          title: "Error",
-          description: "Failed to load messages. Please try again.",
-          variant: "destructive",
-        });
+        if (isMounted) {
+          setError(err.message);
+          toast({
+            title: "Error",
+            description: "Failed to load messages. Please try again.",
+            variant: "destructive",
+          });
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
     fetchMessages();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [user, toast, markMessagesSeen]);
+
+  // Set up a realtime listener for new messages
+  useEffect(() => {
+    if (!user) return;
+    
+    const channel = supabase.channel('public:messages')
+      .on('postgres_changes', { 
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages'
+      }, async (payload) => {
+        console.log('New message:', payload);
+        
+        // Only process if it's relevant to this user
+        if (payload.new.user_type === 'receiver') {
+          // Get sender profile data
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('first_name, last_name')
+            .eq('id', payload.new.user_id)
+            .single();
+            
+          const senderName = profileData 
+            ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() 
+            : 'Receiver';
+            
+          // Add the new message to our state
+          const newMessage: Message = {
+            id: payload.new.id,
+            user_id: payload.new.user_id,
+            content: payload.new.content,
+            created_at: payload.new.created_at,
+            user_type: payload.new.user_type as 'donor' | 'receiver',
+            is_read: false,
+            sender_name: senderName
+          };
+          
+          setMessages(prev => [newMessage, ...prev]);
+          
+          // Mark as read immediately
+          await supabase
+            .from('messages')
+            .update({ is_read: true })
+            .eq('id', payload.new.id);
+        }
+      })
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col bg-mesh-pattern">
