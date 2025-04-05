@@ -63,7 +63,7 @@ const AdminDashboard = () => {
       <div className="flex-1 p-4 md:p-6">
         <div className="max-w-7xl mx-auto">
           <DashboardHeader title="Admin Dashboard">
-            <RefreshButton onClick={fetchAllDonations} isLoading={loading} />
+            <RefreshButton onClick={fetchAllDonations} loading={loading} />
           </DashboardHeader>
 
           <Tabs defaultValue="donations" className="w-full">
@@ -77,8 +77,8 @@ const AdminDashboard = () => {
 
               <div className="flex justify-end mb-4">
                 <StatusFilter 
-                  value={selectedStatus} 
-                  onValueChange={setSelectedStatus} 
+                  selectedStatus={selectedStatus} 
+                  onStatusChange={setSelectedStatus} 
                 />
               </div>
 

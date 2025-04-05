@@ -18,7 +18,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useNavigate } from "react-router-dom";
-import { categories, categoryDisplayNames } from "@/types/receiverDashboard";
+import { categories } from "@/types/receiverDashboard";
 import { ImageUploader } from "./ImageUploader";
 import { 
   Select, 
@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 
 // Remove "All" from categories for donation form
-const donationCategories = categories.filter(category => category !== "All");
+const donationCategories = categories.filter(category => category.value !== "All");
 
 const donationSchema = z.object({
   item_name: z.string().min(1, "Item name is required"),
@@ -187,8 +187,8 @@ export function DonationForm() {
                 </FormControl>
                 <SelectContent>
                   {donationCategories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' ')}
+                    <SelectItem key={category.value} value={category.value}>
+                      {category.value.charAt(0).toUpperCase() + category.value.slice(1).replace('_', ' ')}
                     </SelectItem>
                   ))}
                 </SelectContent>

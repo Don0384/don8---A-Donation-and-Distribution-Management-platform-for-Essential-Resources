@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar } from "lucide-react";
@@ -13,85 +14,30 @@ import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as ShadCalendar } from "@/components/ui/calendar";
+import { useReceiverDonations } from "@/hooks/useReceiverDonations";
 
 const ReceiverDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [donations, setDonations] = useState<Donation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
   const [isSubmittingDonation, setIsSubmittingDonation] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
 
+  const { 
+    donations, 
+    isLoading, 
+    error, 
+    updateDonationStatus,
+    fetchDonations 
+  } = useReceiverDonations(user?.id);
+
   useEffect(() => {
-    async function fetchDonations() {
-      if (!user) return;
-
-      try {
-        setIsLoading(true);
-        const { data, error } = await supabase
-          .from('donations')
-          .select('*')
-          .eq('status', 'pending')
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        // Manually join donor information and pickup requests
-        const enhancedData = await Promise.all((data || []).map(async (donation) => {
-          // Get donor details
-          let donor = null;
-          if (donation.donor_id) {
-            const { data: donorProfile } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', donation.donor_id)
-              .single();
-
-            if (donorProfile) {
-              // Get user auth data for email
-              const { data: userData } = await supabase.auth.admin.getUserById(donation.donor_id);
-
-              donor = {
-                id: donation.donor_id,
-                email: userData?.user?.email || "",
-                first_name: donorProfile.first_name,
-                last_name: donorProfile.last_name,
-                phone: userData?.user?.user_metadata?.phone || null
-              };
-            }
-          }
-
-          // Get pickup requests
-          const { data: pickupRequests } = await supabase
-            .from('pickup_requests')
-            .select('*')
-            .eq('donation_id', donation.id)
-            .order('pickup_time', { ascending: true });
-
-          return {
-            ...donation,
-            donor,
-            images: donation.images || [],
-            pickup_requests: pickupRequests || []
-          } as Donation;
-        }));
-
-        setDonations(enhancedData);
-      } catch (err: any) {
-        console.error('Error fetching donations:', err);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
+    if (user) {
+      fetchDonations('pending');
     }
-
-    fetchDonations();
   }, [user]);
 
-  // Fix the updateDonationStatus type in line 55 to accept both 'received' and 'rejected'
   const handleAcceptDonation = async (donationId: number, pickupTime: string) => {
     try {
       setIsSubmittingDonation(true);
@@ -107,23 +53,21 @@ const ReceiverDashboard = () => {
       if (pickupError) throw pickupError;
 
       // Update UI
-      setDonations((prevDonations) => {
-        return prevDonations.map((d) => {
-          if (d.id === donationId) {
-            // Add the new pickup request to the donation's pickup_requests array
-            const updatedPickupRequests = [
-              ...(d.pickup_requests || []),
-              {
-                user_id: user?.id || '',
-                pickup_time: pickupTime,
-                created_at: new Date().toISOString(),
-                donation_id: donationId,
-              },
-            ];
-            return { ...d, pickup_requests: updatedPickupRequests };
-          }
-          return d;
-        });
+      const updatedDonations = donations.map((d) => {
+        if (d.id === donationId) {
+          // Add the new pickup request to the donation's pickup_requests array
+          const updatedPickupRequests = [
+            ...(d.pickup_requests || []),
+            {
+              user_id: user?.id || '',
+              pickup_time: pickupTime,
+              created_at: new Date().toISOString(),
+              donation_id: donationId,
+            },
+          ];
+          return { ...d, pickup_requests: updatedPickupRequests };
+        }
+        return d;
       });
 
       toast({
@@ -145,27 +89,16 @@ const ReceiverDashboard = () => {
   };
 
   const handleRejectDonation = async (donationId: number) => {
-    if (!user) return;
-
     try {
       setIsSubmittingDonation(true);
-      const { error } = await supabase
-        .from('donations')
-        .update({ status: 'rejected', receiver_id: user.id })
-        .eq('id', donationId);
-
-      if (error) throw error;
-
-      setDonations((prevDonations) =>
-        prevDonations.map((d) =>
-          d.id === donationId ? { ...d, status: 'rejected' } : d
-        )
-      );
-
-      toast({
-        title: "Donation Rejected",
-        description: "You have rejected this donation.",
-      });
+      const success = await updateDonationStatus(donationId, 'rejected');
+      if (success) {
+        // UI updates are handled within the updateDonationStatus function
+        toast({
+          title: "Donation Rejected",
+          description: "You have rejected this donation.",
+        });
+      }
     } catch (err: any) {
       console.error("Error rejecting donation:", err);
       toast({
@@ -187,20 +120,14 @@ const ReceiverDashboard = () => {
     setSelectedDonation(null);
   };
 
-  // Fix the issue when handling donation status updates (line 221)
   const handleUpdateStatus = async (donationId: number, status: 'received' | 'rejected') => {
     try {
       setIsSubmittingDonation(true);
       const success = await updateDonationStatus(donationId, status);
       if (success) {
-        // Update local state
-        setDonations((prevDonations) =>
-          prevDonations.map((d) =>
-            d.id === donationId ? { ...d, status } : d
-          )
-        );
+        // UI updates are handled within the updateDonationStatus function
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error updating donation status:", err);
     } finally {
       setIsSubmittingDonation(false);

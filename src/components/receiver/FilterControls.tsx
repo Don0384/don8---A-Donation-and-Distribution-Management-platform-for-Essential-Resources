@@ -38,8 +38,8 @@ export const FilterControls = ({
           </SelectTrigger>
           <SelectContent>
             {statuses.map((status) => (
-              <SelectItem key={status} value={status}>
-                {status === "All" ? "All Statuses" : status.charAt(0).toUpperCase() + status.slice(1)}
+              <SelectItem key={status.value} value={status.value}>
+                {status.value === "All" ? "All Statuses" : status.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -57,8 +57,8 @@ export const FilterControls = ({
           </SelectTrigger>
           <SelectContent>
             {categories.map((category) => (
-              <SelectItem key={category} value={category}>
-                {category === "All" ? "All Categories" : getCategoryDisplay(category)}
+              <SelectItem key={category.value} value={category.value}>
+                {category.value === "All" ? "All Categories" : getCategoryDisplay(category.value)}
               </SelectItem>
             ))}
           </SelectContent>

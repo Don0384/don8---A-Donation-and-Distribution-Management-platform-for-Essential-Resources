@@ -1,64 +1,42 @@
 
-import { Check, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Filter } from "lucide-react";
 
-export interface StatusFilterProps {
-  value: string;
-  onValueChange: (value: string) => void;
+interface StatusFilterProps {
+  selectedStatus: string;
+  onStatusChange: (status: string) => void;
 }
 
-const statuses = [
-  { value: "all", label: "All Statuses" },
-  { value: "pending", label: "Pending" },
-  { value: "received", label: "Received" },
-  { value: "rejected", label: "Rejected" }
-];
+const StatusFilter = ({ selectedStatus, onStatusChange }: StatusFilterProps) => {
+  const statuses = [
+    { value: "all", label: "All Statuses" },
+    { value: "pending", label: "Pending" },
+    { value: "received", label: "Received" },
+    { value: "rejected", label: "Rejected" },
+  ];
 
-const StatusFilter = ({ value, onValueChange }: StatusFilterProps) => {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" className="min-w-[180px] justify-between">
-          {statuses.find(status => status.value === value)?.label || 'Filter Status'}
-          <ChevronDown className="ml-2 h-4 w-4 text-muted-foreground" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="p-0" align="start">
-        <Command>
-          <CommandList>
-            <CommandEmpty>No status found.</CommandEmpty>
-            <CommandGroup>
-              {statuses.map((status) => (
-                <CommandItem
-                  key={status.value}
-                  value={status.value}
-                  onSelect={() => {
-                    onValueChange(status.value);
-                  }}
-                >
-                  {status.label}
-                  {value === status.value && (
-                    <Check className="ml-auto h-4 w-4" />
-                  )}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+    <div className="flex items-center gap-2">
+      <Filter className="h-4 w-4 text-gray-500" />
+      <Select value={selectedStatus} onValueChange={onStatusChange}>
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Filter by status" />
+        </SelectTrigger>
+        <SelectContent>
+          {statuses.map((status) => (
+            <SelectItem key={status.value} value={status.value}>
+              {status.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 };
 

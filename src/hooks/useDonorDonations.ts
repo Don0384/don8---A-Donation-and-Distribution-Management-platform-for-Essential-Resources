@@ -35,22 +35,26 @@ export const useDonorDonations = () => {
           let receiver = null;
           
           if (donation.receiver_id) {
-            // Get profile info for the receiver
-            const { data: receiverProfile } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', donation.receiver_id)
-              .single();
-              
-            if (receiverProfile) {
-              // Get user auth data for email
-              receiver = {
-                id: donation.receiver_id,
-                email: receiverProfile.username || "",
-                first_name: receiverProfile.first_name,
-                last_name: receiverProfile.last_name,
-                phone: null // We don't have phone in profile currently
-              };
+            try {
+              // Get profile info for the receiver
+              const { data: receiverProfile, error: profileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', donation.receiver_id)
+                .single();
+                
+              if (!profileError && receiverProfile) {
+                // Get user auth data for email
+                receiver = {
+                  id: donation.receiver_id,
+                  email: receiverProfile.username || "",
+                  first_name: receiverProfile.first_name,
+                  last_name: receiverProfile.last_name,
+                  phone: null // We don't have phone in profile currently
+                };
+              }
+            } catch (err) {
+              console.error("Error fetching receiver profile:", err);
             }
           }
           

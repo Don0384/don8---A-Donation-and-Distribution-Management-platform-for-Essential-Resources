@@ -39,20 +39,24 @@ export const useReceiverDonations = (userId: string | undefined) => {
         // Get donor details
         let donor = null;
         if (donation.donor_id) {
-          const { data: donorProfile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', donation.donor_id)
-            .single();
-            
-          if (donorProfile) {
-            donor = {
-              id: donation.donor_id,
-              email: donorProfile.username || "",
-              first_name: donorProfile.first_name,
-              last_name: donorProfile.last_name,
-              phone: null // We don't have phone in profile currently
-            };
+          try {
+            const { data: donorProfile, error: profileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', donation.donor_id)
+              .single();
+              
+            if (!profileError && donorProfile) {
+              donor = {
+                id: donation.donor_id,
+                email: donorProfile.username || "",
+                first_name: donorProfile.first_name,
+                last_name: donorProfile.last_name,
+                phone: null // We don't have phone in profile currently
+              };
+            }
+          } catch (err) {
+            console.error("Error fetching donor profile:", err);
           }
         }
         
