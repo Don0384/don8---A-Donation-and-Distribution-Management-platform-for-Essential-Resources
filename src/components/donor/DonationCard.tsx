@@ -1,150 +1,229 @@
 
-import { Package, Clock, Image as ImageIcon } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/utils/dateUtils";
 import { useState } from "react";
-import { ImageGallery } from "@/components/receiver/ImageGallery";
+import { Clock, Trash, User, Flag } from "lucide-react";
+import { formatTimeRemaining } from "@/utils/dateUtils";
+import { 
+  Card, 
+  CardContent, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
+import { UserContactInfo } from "@/components/UserContactInfo";
+import { ReportUserDialog } from "@/components/ReportUserDialog";
+import { DonationConfirmDialog } from "@/components/donations/DonationConfirmDialog";
 
-type DonationCardProps = {
-  donation: {
-    id: number;
-    item_name: string;
-    quantity: string;
-    category: string;
-    status: string;
+interface DonationProps {
+  id: number;
+  itemName: string;
+  quantity: string;
+  category: string;
+  status: string;
+  createdAt: string;
+  description?: string;
+  expiryTime?: string | null;
+  timeRemaining?: string | null;
+  receiver?: {
+    id: string;
+    email: string;
+    first_name: string | null;
+    last_name: string | null;
+    phone: string | null;
+  } | null;
+  pickupRequests?: Array<{
+    user_id: string;
+    pickup_time: string;
     created_at: string;
-    description: string | null;
-    location: string;
-    expiry_time: string | null;
-    images: string[] | null;
-  };
-  timeRemaining: string | null;
-};
+  }>;
+  onDelete?: (id: number) => void;
+}
 
-export const DonationCard = ({ donation, timeRemaining }: DonationCardProps) => {
-  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-  const [initialImageIndex, setInitialImageIndex] = useState(0);
-
-  const getStatusColor = (status: string) => {
+export default function DonationCard({
+  id,
+  itemName,
+  quantity,
+  category,
+  status,
+  createdAt,
+  description,
+  expiryTime,
+  timeRemaining,
+  receiver,
+  pickupRequests = [],
+  onDelete
+}: DonationProps) {
+  const { user } = useAuth();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showReceiverInfo, setShowReceiverInfo] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  
+  const canDelete = status === "pending";
+  
+  // Format date
+  const formattedDate = new Date(createdAt).toLocaleDateString();
+  
+  // Get sorted pickup requests
+  const sortedRequests = [...pickupRequests].sort((a, b) => 
+    new Date(a.pickup_time).getTime() - new Date(b.pickup_time).getTime()
+  );
+  
+  const getStatusColor = () => {
     switch (status) {
-      case 'approved':
-      case 'received':
-        return 'bg-green-100 text-green-800';
-      case 'rejected':
-        return 'bg-red-100 text-red-800';
+      case "received":
+        return "text-green-600 bg-green-100";
+      case "rejected":
+        return "text-red-600 bg-red-100";
       default:
-        return 'bg-yellow-100 text-yellow-800';
+        return "text-amber-600 bg-amber-100";
     }
   };
-
-  const getCategoryIcon = (category: string) => {
+  
+  const getCategoryEmoji = () => {
     switch (category) {
-      case 'clothes':
-        return <Package className="w-4 h-4" />;
+      case "food":
+        return "🍲";
+      case "clothes":
+        return "👕";
+      case "furniture":
+        return "🪑";
+      case "electronics":
+        return "📱";
+      case "books":
+        return "📚";
+      case "toys":
+        return "🧸";
       default:
-        return <Package className="w-4 h-4" />;
+        return "📦";
     }
   };
-
-  const openGallery = (index: number = 0) => {
-    setInitialImageIndex(index);
-    setIsGalleryOpen(true);
-  };
-
-  const hasImages = donation.images && donation.images.length > 0;
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 transition-all hover:shadow-md">
-      <div className="flex items-start justify-between">
-        <div className="space-y-3">
-          <div className="flex items-center space-x-3">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {donation.item_name}
-            </h3>
-            <Badge className={`${getStatusColor(donation.status)} capitalize`}>
-              {donation.status}
-            </Badge>
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center text-sm text-gray-600 space-x-4">
-              <span className="flex items-center">
-                {getCategoryIcon(donation.category)}
-                <span className="ml-1 capitalize">{donation.category}</span>
-              </span>
-              <span>Quantity: {donation.quantity}</span>
-            </div>
-            
-            {donation.description && (
-              <p className="text-sm text-gray-600">{donation.description}</p>
-            )}
-            
-            <p className="text-sm text-gray-600">
-              <span className="font-medium">Location:</span> {donation.location}
-            </p>
-            
-            {donation.category === 'food' && donation.expiry_time && (
-              <div className="mt-2">
-                <div className="flex items-center text-sm font-medium">
-                  <Clock className="w-4 h-4 text-amber-500 mr-1" />
-                  <span className="text-amber-700">
-                    Freshness timer: {timeRemaining || 'Expired'}
-                  </span>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  This food item will remain fresh until {new Date(donation.expiry_time).toLocaleString()}
-                </p>
-              </div>
-            )}
-
-            {hasImages && (
-              <div className="mt-3">
-                <p className="text-sm font-medium text-gray-700 mb-2">Images:</p>
-                <div className="flex flex-wrap gap-2">
-                  {donation.images.map((image, index) => (
-                    <div 
-                      key={index} 
-                      className="w-16 h-16 rounded overflow-hidden cursor-pointer border border-gray-200 hover:opacity-90 transition-opacity"
-                      onClick={() => openGallery(index)}
-                    >
-                      <img 
-                        src={image} 
-                        alt={`Image ${index + 1} of ${donation.item_name}`} 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="mt-2 text-xs flex items-center gap-1"
-                  onClick={() => openGallery(0)}
-                >
-                  <ImageIcon className="w-4 h-4" />
-                  View all images
-                </Button>
-              </div>
-            )}
-            
-            <div className="flex items-center text-sm text-gray-500">
-              <Clock className="w-4 h-4 mr-1" />
-              {formatDate(donation.created_at)}
-            </div>
-          </div>
+    <Card className="transition-all hover:shadow-md">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-start">
+          <CardTitle className="text-lg font-bold">{itemName}</CardTitle>
+          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor()}`}>
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </span>
         </div>
-      </div>
-
-      {hasImages && (
-        <ImageGallery
-          images={donation.images}
-          isOpen={isGalleryOpen}
-          onClose={() => setIsGalleryOpen(false)}
-          initialIndex={initialImageIndex}
-          itemName={donation.item_name}
+        <p className="text-sm text-gray-500 mt-1">
+          {getCategoryEmoji()} {category.charAt(0).toUpperCase() + category.slice(1)} • {quantity}
+        </p>
+      </CardHeader>
+      
+      <CardContent className="pb-2">
+        {description && (
+          <p className="text-sm text-gray-600 mb-3">{description}</p>
+        )}
+        
+        <div className="text-xs text-gray-500 flex items-center">
+          <Clock className="w-3 h-3 mr-1" />
+          <span>Added on {formattedDate}</span>
+        </div>
+        
+        {expiryTime && category === "food" && (
+          <div className="mt-2 text-sm">
+            <div className="flex items-center">
+              <Clock className="h-4 w-4 mr-1 text-amber-500" />
+              <span className="text-amber-700">
+                {timeRemaining ? `Fresh for: ${timeRemaining}` : "Expired"}
+              </span>
+            </div>
+            <p className="text-xs text-gray-600 mt-1">
+              Expires on {new Date(expiryTime).toLocaleString()}
+            </p>
+          </div>
+        )}
+        
+        {status === "received" && receiver && (
+          <div className="mt-3">
+            <button
+              onClick={() => setShowReceiverInfo(!showReceiverInfo)}
+              className="flex items-center text-blue-600 hover:underline text-sm"
+            >
+              <User className="w-4 h-4 mr-1" />
+              {showReceiverInfo ? "Hide" : "Show"} recipient information
+            </button>
+            
+            {showReceiverInfo && (
+              <div className="mt-2">
+                <UserContactInfo user={receiver} title="Recipient" />
+                {user && receiver.id !== user.id && (
+                  <button
+                    onClick={() => setShowReportDialog(true)}
+                    className="mt-2 flex items-center text-red-600 hover:underline text-xs"
+                  >
+                    <Flag className="w-3 h-3 mr-1" />
+                    Report this recipient
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        
+        {status === "pending" && sortedRequests.length > 0 && (
+          <div className="mt-3 border-t border-gray-100 pt-3">
+            <h4 className="text-sm font-medium mb-2">Pickup Requests ({sortedRequests.length})</h4>
+            <div className="space-y-2">
+              {sortedRequests.map((request, idx) => (
+                <div key={idx} className="text-xs p-2 bg-gray-50 rounded">
+                  <div className="flex justify-between">
+                    <span className="font-medium">Recipient #{idx + 1}</span>
+                    <span className="text-green-600">
+                      {new Date(request.pickup_time).toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="text-gray-500 mt-1">
+                    Can pick up at the time shown above
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+      
+      <CardFooter className="pt-2">
+        {canDelete && onDelete && (
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            onClick={() => setShowDeleteConfirm(true)}
+          >
+            <Trash className="h-3.5 w-3.5 mr-2" />
+            Remove
+          </Button>
+        )}
+      </CardFooter>
+      
+      {onDelete && (
+        <DonationConfirmDialog
+          isOpen={showDeleteConfirm}
+          onOpenChange={setShowDeleteConfirm}
+          onConfirm={() => {
+            onDelete(id);
+            setShowDeleteConfirm(false);
+          }}
+          title="Remove Donation"
+          description="Are you sure you want to remove this donation? This action cannot be undone."
+          confirmText="Remove"
+          confirmVariant="destructive"
         />
       )}
-    </div>
+      
+      {receiver && user && (
+        <ReportUserDialog
+          isOpen={showReportDialog}
+          onOpenChange={setShowReportDialog}
+          reportedUserId={receiver.id}
+          reportedUserName={`${receiver.first_name || ''} ${receiver.last_name || ''}`.trim() || 'this recipient'}
+          reporterUserId={user.id}
+        />
+      )}
+    </Card>
   );
-};
+}

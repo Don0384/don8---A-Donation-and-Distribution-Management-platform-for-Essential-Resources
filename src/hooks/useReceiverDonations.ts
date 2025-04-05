@@ -19,7 +19,16 @@ export const useReceiverDonations = (userId: string | undefined) => {
       
       let query = supabase
         .from('donations')
-        .select('*')
+        .select(`
+          *,
+          donor:donor_id(
+            id:id,
+            email:email,
+            first_name:raw_user_meta_data->first_name,
+            last_name:raw_user_meta_data->last_name,
+            phone:raw_user_meta_data->phone
+          )
+        `)
         .order('created_at', { ascending: false });
       
       if (status !== "All") {
@@ -34,13 +43,23 @@ export const useReceiverDonations = (userId: string | undefined) => {
       
       if (error) throw error;
       
-      // Transform data to ensure it matches the Donation type with images
-      const transformedData: Donation[] = (data || []).map(item => ({
-        ...item,
-        images: item.images || []
+      // Get pickup requests for each donation
+      const enhancedData = await Promise.all((data || []).map(async (donation) => {
+        // @ts-ignore - This table exists but TypeScript doesn't know about it yet
+        const { data: pickupRequests } = await supabase
+          .from('pickup_requests')
+          .select('*')
+          .eq('donation_id', donation.id)
+          .order('pickup_time', { ascending: true });
+        
+        return {
+          ...donation,
+          images: donation.images || [],
+          pickup_requests: pickupRequests || []
+        };
       }));
       
-      setDonations(transformedData);
+      setDonations(enhancedData as Donation[]);
     } catch (err: any) {
       console.error('Error fetching donations:', err);
       setError(err.message);

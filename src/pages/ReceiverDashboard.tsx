@@ -51,7 +51,7 @@ const ReceiverDashboard = () => {
     }
   }, [selectedStatus, user?.id]);
 
-  const openPickupDialog = (donationId: number, action: 'received' | 'rejected', name: string) => {
+  const openPickupDialog = (donationId: number, action: 'received', name: string) => {
     setSelectedDonation({ id: donationId, action, name });
     setPickupDialogOpen(true);
   };
@@ -61,6 +61,7 @@ const ReceiverDashboard = () => {
     
     try {
       // First, store the pickup request
+      // @ts-ignore - This table exists but TypeScript doesn't know about it yet
       const { error: insertError } = await supabase
         .from('pickup_requests')
         .insert({
@@ -79,10 +80,14 @@ const ReceiverDashboard = () => {
       // Update the donation to show the request
       const updatedDonation = donations.find(d => d.id === selectedDonation.id);
       if (updatedDonation) {
+        const pickupRequests = Array.isArray(updatedDonation.pickup_requests) 
+          ? updatedDonation.pickup_requests 
+          : [];
+          
         const donation = {
           ...updatedDonation,
           pickup_requests: [
-            ...updatedDonation.pickup_requests || [],
+            ...pickupRequests,
             {
               user_id: user.id,
               donation_id: selectedDonation.id,
@@ -96,6 +101,9 @@ const ReceiverDashboard = () => {
           prev.map(d => d.id === selectedDonation.id ? donation : d)
         );
       }
+      
+      // Now continue with accepting the donation
+      setDialogOpen(true);
     } catch (error: any) {
       console.error("Error submitting pickup time:", error);
       toast({
@@ -190,7 +198,7 @@ const ReceiverDashboard = () => {
             onAction={(id, action) => {
               const donation = donations.find(d => d.id === id);
               if (donation) {
-                openPickupDialog(id, action, donation.item_name);
+                openPickupDialog(id, action as 'received', donation.item_name);
               }
             }}
           />

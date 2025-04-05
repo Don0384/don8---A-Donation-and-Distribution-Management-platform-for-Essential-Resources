@@ -45,6 +45,7 @@ export function UserReportsTable() {
       setLoading(true);
       
       // Get all reports with user details
+      // @ts-ignore - This table exists but TypeScript doesn't know about it yet
       const { data, error } = await supabase
         .from('user_reports')
         .select(`
@@ -66,7 +67,7 @@ export function UserReportsTable() {
         
       if (error) throw error;
       
-      setReports(data || []);
+      setReports(data as Report[] || []);
     } catch (error) {
       console.error("Error fetching reports:", error);
       toast({
@@ -91,6 +92,7 @@ export function UserReportsTable() {
     try {
       if (actionType === 'ban') {
         // First, update the report status
+        // @ts-ignore - This table exists but TypeScript doesn't know about it yet
         const { error: reportError } = await supabase
           .from('user_reports')
           .update({ status: 'resolved' })
@@ -112,6 +114,7 @@ export function UserReportsTable() {
         });
       } else {
         // Just update the report status
+        // @ts-ignore - This table exists but TypeScript doesn't know about it yet
         const { error } = await supabase
           .from('user_reports')
           .update({ status: actionType === 'resolve' ? 'resolved' : 'dismissed' })

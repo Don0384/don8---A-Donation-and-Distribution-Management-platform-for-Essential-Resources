@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 
@@ -50,6 +51,8 @@ export async function signUp({
         phone: phone,
         user_type: userType
       },
+      // Email verification is enabled by default in Supabase
+      emailRedirectTo: window.location.origin,
     },
   });
   

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatTimeRemaining } from "@/utils/dateUtils";
 import { useAuth } from "@/context/AuthContext";
 import { setupDonationDeleteListener } from "@/services/donationService";
+import { DonationUser } from "@/types/donations";
 
 type Donation = {
   id: number;
@@ -15,7 +16,15 @@ type Donation = {
   description: string | null;
   location: string;
   expiry_time: string | null;
-  images: string[] | null; // Make sure images is included here as well
+  images: string[] | null;
+  receiver_id: string | null;
+  receiver: DonationUser | null;
+  pickup_requests: Array<{
+    user_id: string;
+    pickup_time: string;
+    created_at: string;
+  }>;
+  acceptance_deadline: string | null;
 };
 
 export const useDonorDonations = () => {
@@ -34,12 +43,37 @@ export const useDonorDonations = () => {
         setIsLoading(true);
         const { data, error } = await supabase
           .from('donations')
-          .select('*')
+          .select(`
+            *,
+            receiver:receiver_id(
+              id:id,
+              email:email,
+              first_name:raw_user_meta_data->first_name,
+              last_name:raw_user_meta_data->last_name,
+              phone:raw_user_meta_data->phone
+            )
+          `)
           .eq('donor_id', user.id)
           .order('created_at', { ascending: false });
         
         if (error) throw error;
-        setDonations(data || []);
+        
+        // Get pickup requests for each donation
+        const enhancedData = await Promise.all((data || []).map(async (donation) => {
+          // @ts-ignore - This table exists but TypeScript doesn't know about it yet
+          const { data: pickupRequests } = await supabase
+            .from('pickup_requests')
+            .select('*')
+            .eq('donation_id', donation.id)
+            .order('pickup_time', { ascending: true });
+            
+          return {
+            ...donation,
+            pickup_requests: pickupRequests || []
+          };
+        }));
+        
+        setDonations(enhancedData);
         
         // Initialize time remaining for food items
         const initialTimeMap: Record<number, string | null> = {};

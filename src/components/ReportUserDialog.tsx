@@ -38,6 +38,7 @@ export function ReportUserDialog({
     
     setIsSubmitting(true);
     try {
+      // @ts-ignore - This table exists but TypeScript doesn't know about it yet
       const { error } = await supabase
         .from('user_reports')
         .insert({

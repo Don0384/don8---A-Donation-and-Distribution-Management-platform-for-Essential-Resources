@@ -1,58 +1,68 @@
 
-import { useDonations } from "@/hooks/useDonations";
-import DashboardHeader from "@/components/admin/DashboardHeader";
-import StatusFilter from "@/components/admin/StatusFilter";
-import RefreshButton from "@/components/admin/RefreshButton";
-import DonationTable from "@/components/admin/DonationTable";
-import DonationStats from "@/components/admin/DonationStats";
-import DonationDetails from "@/components/admin/DonationDetails";
+import { useState } from "react";
 import Navbar from "@/components/Navbar";
+import DashboardHeader from "@/components/admin/DashboardHeader";
+import DonationStats from "@/components/admin/DonationStats";
+import DonationTable from "@/components/admin/DonationTable";
+import StatusFilter from "@/components/admin/StatusFilter";
+import { useAuth } from "@/context/AuthContext";
+import { useDonations } from "@/hooks/useDonations";
+import { UserReportsTable } from "@/components/admin/UserReportsTable";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const AdminDashboard = () => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("dashboard");
   const {
     donations,
     loading,
     statusFilter,
     setStatusFilter,
-    fetchDonations,
-    removeDonation
+    removeDonation,
   } = useDonations();
-
-  const handleDonationRemoved = (donationId: number) => {
-    removeDonation(donationId);
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="container mx-auto px-4 py-8">
-        <DashboardHeader title="Admin Dashboard">
-          <StatusFilter
-            value={statusFilter || "all"}
-            onValueChange={(value) => setStatusFilter(value === "all" ? null : value)}
-          />
-          <RefreshButton
-            loading={loading}
-            onClick={fetchDonations}
-          />
-        </DashboardHeader>
-
-        {/* Dashboard Stats and Charts */}
-        {!loading && (
-          <DonationStats donations={donations} />
-        )}
-
-        {/* Detailed Data Tables */}
-        {!loading && (
-          <DonationDetails donations={donations} />
-        )}
-
-        <h2 className="text-xl font-semibold mt-8 mb-4">All Donations</h2>
-        <DonationTable
-          donations={donations}
-          loading={loading}
-          onDonationRemoved={handleDonationRemoved}
-        />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <DashboardHeader user={user} />
+        
+        <Tabs 
+          value={activeTab} 
+          onValueChange={setActiveTab}
+          className="mt-8"
+        >
+          <TabsList>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="reports">User Reports</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="dashboard" className="space-y-6 mt-6">
+            <DonationStats donations={donations} />
+            
+            <div className="bg-white shadow rounded-lg p-4 md:p-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                <h2 className="text-xl font-bold">All Donations</h2>
+                <StatusFilter
+                  selectedStatus={statusFilter}
+                  onStatusChange={setStatusFilter}
+                />
+              </div>
+              
+              <DonationTable 
+                donations={donations} 
+                loading={loading} 
+                onDonationRemoved={removeDonation}
+              />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="reports" className="mt-6">
+            <div className="bg-white shadow rounded-lg p-6">
+              <UserReportsTable />
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

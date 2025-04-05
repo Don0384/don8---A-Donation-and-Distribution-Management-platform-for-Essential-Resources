@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       donations: {
         Row: {
+          acceptance_deadline: string | null
           category: string
           created_at: string
           description: string | null
@@ -25,6 +26,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          acceptance_deadline?: string | null
           category: string
           created_at?: string
           description?: string | null
@@ -39,6 +41,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          acceptance_deadline?: string | null
           category?: string
           created_at?: string
           description?: string | null
@@ -81,6 +84,38 @@ export type Database = {
         }
         Relationships: []
       }
+      pickup_requests: {
+        Row: {
+          created_at: string
+          donation_id: number | null
+          id: string
+          pickup_time: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          donation_id?: number | null
+          id?: string
+          pickup_time: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          donation_id?: number | null
+          id?: string
+          pickup_time?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pickup_requests_donation_id_fkey"
+            columns: ["donation_id"]
+            isOneToOne: false
+            referencedRelation: "donations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -105,6 +140,33 @@ export type Database = {
           last_name?: string | null
           updated_at?: string | null
           username?: string | null
+        }
+        Relationships: []
+      }
+      user_reports: {
+        Row: {
+          created_at: string
+          id: number
+          reason: string
+          reported_user_id: string
+          reporter_user_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          reason: string
+          reported_user_id: string
+          reporter_user_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          reason?: string
+          reported_user_id?: string
+          reporter_user_id?: string
+          status?: string
         }
         Relationships: []
       }

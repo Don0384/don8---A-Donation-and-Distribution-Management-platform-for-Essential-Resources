@@ -1,11 +1,13 @@
 
-import { Clock, Package, Check, X, Image as ImageIcon, Maximize, User } from "lucide-react";
+import { Clock, Package, Check, X, Image as ImageIcon, Maximize, User, Flag } from "lucide-react";
 import { Donation, categoryDisplayNames } from "@/types/receiverDashboard";
 import { StatusBadge } from "./StatusBadge";
 import { formatDate, formatTimeRemaining } from "@/utils/dateUtils";
 import { useEffect, useState } from "react";
 import { ImageGallery } from "./ImageGallery";
 import { UserContactInfo } from "@/components/UserContactInfo";
+import { ReportUserDialog } from "@/components/ReportUserDialog";
+import { useAuth } from "@/context/AuthContext";
 
 interface DonationItemProps {
   donation: Donation;
@@ -13,6 +15,7 @@ interface DonationItemProps {
 }
 
 export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
+  const { user } = useAuth();
   const [timeRemaining, setTimeRemaining] = useState<string | null>(
     formatTimeRemaining(donation.expiry_time)
   );
@@ -24,6 +27,7 @@ export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
   const [showGallery, setShowGallery] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showDonorInfo, setShowDonorInfo] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
 
   // Update timer every second for food items with expiry time
   useEffect(() => {
@@ -117,6 +121,15 @@ export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
                   {showDonorInfo && (
                     <div className="mt-2">
                       <UserContactInfo user={donation.donor} title="Donor" />
+                      {user && donation.donor.id !== user.id && (
+                        <button
+                          onClick={() => setShowReportDialog(true)}
+                          className="mt-2 flex items-center text-red-600 hover:underline text-xs"
+                        >
+                          <Flag className="w-3 h-3 mr-1" />
+                          Report this donor
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -175,6 +188,16 @@ export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
           onClose={() => setShowGallery(false)}
           initialIndex={selectedImageIndex}
           itemName={donation.item_name}
+        />
+      )}
+
+      {donation.donor && user && (
+        <ReportUserDialog
+          isOpen={showReportDialog}
+          onOpenChange={setShowReportDialog}
+          reportedUserId={donation.donor.id}
+          reportedUserName={`${donation.donor.first_name || ''} ${donation.donor.last_name || ''}`.trim() || 'this donor'}
+          reporterUserId={user.id}
         />
       )}
     </div>
