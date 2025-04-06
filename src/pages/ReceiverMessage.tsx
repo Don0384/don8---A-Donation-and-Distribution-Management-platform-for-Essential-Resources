@@ -39,20 +39,30 @@ const ReceiverMessage = () => {
     try {
       setIsSubmitting(true);
       
-      const { error } = await supabase
+      console.log("Sending message with data:", {
+        user_id: user.id,
+        content: message,
+        user_type: userType,
+        is_read: false
+      });
+      
+      const { data, error } = await supabase
         .from('messages')
         .insert({
           user_id: user.id,
           content: message,
           user_type: userType,
           is_read: false
-        });
+        })
+        .select();
         
       if (error) throw error;
       
+      console.log("Message sent successfully:", data);
+      
       toast({
         title: "Message sent",
-        description: "Your message has been sent successfully.",
+        description: "Your message has been sent successfully to all donors.",
       });
       
       // Clear the form and redirect

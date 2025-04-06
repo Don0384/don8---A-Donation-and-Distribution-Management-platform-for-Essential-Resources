@@ -16,6 +16,7 @@ export const useReceiverDonations = (userId: string | undefined) => {
     
     try {
       setIsLoading(true);
+      setError(null); // Clear any previous errors
       console.log("Fetching donations with status:", status);
       
       let query = supabase
@@ -86,7 +87,7 @@ export const useReceiverDonations = (userId: string | undefined) => {
       setDonations(enhancedData);
     } catch (err: any) {
       console.error('Error fetching donations:', err);
-      setError(err.message);
+      setError(err.message || "Failed to load donations. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -160,6 +161,11 @@ export const useReceiverDonations = (userId: string | undefined) => {
         description: `The donation has been ${action} successfully.`,
         variant: action === 'received' ? 'default' : 'destructive',
       });
+      
+      // Update local state
+      setDonations(prev => prev.map(d => 
+        d.id === donationId ? { ...d, status: action } : d
+      ));
       
       return true;
     } catch (err: any) {

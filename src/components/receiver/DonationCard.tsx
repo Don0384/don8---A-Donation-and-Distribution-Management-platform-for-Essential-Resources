@@ -43,7 +43,9 @@ export const DonationCard = ({ donation, onOpen }: DonationCardProps) => {
     return categoryDisplayNames[category] || category;
   };
 
-  const hasImages = donation.images && donation.images.length > 0;
+  // Make sure images is always an array, even if it's null or undefined
+  const images = Array.isArray(donation.images) ? donation.images : [];
+  const hasImages = images.length > 0;
 
   return (
     <div 
@@ -71,7 +73,7 @@ export const DonationCard = ({ donation, onOpen }: DonationCardProps) => {
         
         <div className="flex items-center text-sm text-gray-500">
           <Clock className="w-4 h-4 mr-1" />
-          {formatDate(donation.created_at)}
+          <span>{formatDate(donation.created_at)}</span>
         </div>
       </div>
       
@@ -90,13 +92,13 @@ export const DonationCard = ({ donation, onOpen }: DonationCardProps) => {
         <div className="mt-3 flex">
           <div className="w-16 h-16 rounded overflow-hidden">
             <img 
-              src={donation.images[0]} 
+              src={images[0]} 
               alt={donation.item_name} 
               className="w-full h-full object-cover"
             />
-            {donation.images.length > 1 && (
+            {images.length > 1 && (
               <div className="text-xs text-white bg-gray-800 bg-opacity-70 text-center -mt-5 relative">
-                +{donation.images.length - 1} more
+                +{images.length - 1} more
               </div>
             )}
           </div>

@@ -9,7 +9,9 @@ import Navbar from "@/components/Navbar";
 import { DonationCard } from "@/components/receiver/DonationCard";
 import { PickupTimeDialog } from "@/components/receiver/PickupTimeDialog";
 import { useReceiverDonations } from "@/hooks/useReceiverDonations";
-import { Loader2 } from "lucide-react";
+import { Loader2, MessageSquare } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNotifications } from "@/hooks/useNotifications";
 
 const ReceiverDashboard = () => {
   const { user } = useAuth();
@@ -19,6 +21,7 @@ const ReceiverDashboard = () => {
   const [isSubmittingDonation, setIsSubmittingDonation] = useState(false);
   const [showPickupDialog, setShowPickupDialog] = useState(false);
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
+  const { unreadMessageCount } = useNotifications("receiver");
 
   const { 
     donations, 
@@ -30,14 +33,18 @@ const ReceiverDashboard = () => {
 
   useEffect(() => {
     if (user) {
-      // Set a timeout to ensure we show a loading state for at least a short time
-      // This prevents flickering UI if the data loads very quickly
       const loadData = async () => {
-        await fetchDonations('pending');
-        // Give a small delay before removing the loading state to avoid UI flickering
-        setTimeout(() => {
-          setIsLoadingInitial(false);
-        }, 300);
+        try {
+          await fetchDonations('pending');
+        } catch (err) {
+          console.error("Error loading donations:", err);
+        } finally {
+          // Delay removing loading state to prevent flicker
+          setTimeout(() => {
+            setIsLoadingInitial(false);
+          },
+          300);
+        }
       };
       
       loadData();
@@ -60,24 +67,6 @@ const ReceiverDashboard = () => {
 
       if (pickupError) throw pickupError;
 
-      // Update UI
-      const updatedDonations = donations.map((d) => {
-        if (d.id === donationId) {
-          // Add the new pickup request to the donation's pickup_requests array
-          const updatedPickupRequests = [
-            ...(d.pickup_requests || []),
-            {
-              user_id: user?.id || '',
-              pickup_time: pickupTime,
-              created_at: new Date().toISOString(),
-              donation_id: donationId,
-            },
-          ];
-          return { ...d, pickup_requests: updatedPickupRequests };
-        }
-        return d;
-      });
-
       toast({
         title: "Pickup request submitted",
         description:
@@ -94,30 +83,6 @@ const ReceiverDashboard = () => {
       setIsSubmittingDonation(false);
       setSelectedDonation(null);
       setShowPickupDialog(false);
-    }
-  };
-
-  const handleRejectDonation = async (donationId: number) => {
-    try {
-      setIsSubmittingDonation(true);
-      const success = await updateDonationStatus(donationId, 'rejected');
-      if (success) {
-        // UI updates are handled within the updateDonationStatus function
-        toast({
-          title: "Donation Rejected",
-          description: "You have rejected this donation.",
-        });
-      }
-    } catch (err: any) {
-      console.error("Error rejecting donation:", err);
-      toast({
-        title: "Error",
-        description: "Failed to reject donation. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmittingDonation(false);
-      setSelectedDonation(null);
     }
   };
 
@@ -163,6 +128,13 @@ const ReceiverDashboard = () => {
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold">Available Donations</h1>
+            <Button 
+              onClick={() => navigate("/receiver/message")} 
+              className="flex items-center gap-2 bg-receiver-primary hover:bg-receiver-hover"
+            >
+              <MessageSquare className="h-4 w-4" />
+              Send Message
+            </Button>
           </div>
 
           {isLoading ? (
@@ -170,11 +142,17 @@ const ReceiverDashboard = () => {
               <Loader2 className="h-8 w-8 animate-spin rounded-full text-primary" />
             </div>
           ) : error ? (
-            <div className="text-center py-8">
+            <div className="text-center py-8 bg-red-50 rounded-lg p-4 border border-red-100">
               <p className="text-red-500">{error}</p>
+              <button 
+                onClick={() => fetchDonations('pending')}
+                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+              >
+                Try again
+              </button>
             </div>
           ) : donations.length === 0 ? (
-            <div className="text-center py-8">
+            <div className="text-center py-8 bg-gray-50 rounded-lg p-8">
               <p className="text-gray-500">No donations available at the moment.</p>
             </div>
           ) : (
