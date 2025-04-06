@@ -54,7 +54,10 @@ const DonorInbox = () => {
               .single();
               
             if (profileData && !profileError) {
-              senderName = `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim();
+              // Only access first_name and last_name if profileData exists and there's no error
+              const firstName = profileData.first_name || '';
+              const lastName = profileData.last_name || '';
+              senderName = `${firstName} ${lastName}`.trim();
               if (!senderName) {
                 senderName = message.user_type === 'receiver' ? 'Receiver' : 'Donor';
               }
