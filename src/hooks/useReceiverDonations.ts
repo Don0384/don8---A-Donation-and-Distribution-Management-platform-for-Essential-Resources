@@ -16,6 +16,7 @@ export const useReceiverDonations = (userId: string | undefined) => {
     
     try {
       setIsLoading(true);
+      console.log("Fetching donations with status:", status);
       
       let query = supabase
         .from('donations')
@@ -33,6 +34,8 @@ export const useReceiverDonations = (userId: string | undefined) => {
       const { data, error } = await query;
       
       if (error) throw error;
+      
+      console.log("Retrieved donations:", data?.length);
       
       // Manually join donor information and pickup requests
       const enhancedData = await Promise.all((data || []).map(async (donation) => {
@@ -67,10 +70,15 @@ export const useReceiverDonations = (userId: string | undefined) => {
           .eq('donation_id', donation.id)
           .order('pickup_time', { ascending: true });
         
+        // Ensure images is always an array (even if null in the database)
+        const images = donation.images || [];
+        
+        console.log(`Donation ${donation.id} has ${images.length} images`);
+        
         return {
           ...donation,
           donor,
-          images: donation.images || [],
+          images: images,
           pickup_requests: pickupRequests || []
         } as Donation;
       }));

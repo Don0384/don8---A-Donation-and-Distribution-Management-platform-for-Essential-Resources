@@ -1,3 +1,4 @@
+
 import { Clock, Package, Check, X, Image as ImageIcon, Maximize, User, Flag } from "lucide-react";
 import { Donation, categoryDisplayNames } from "@/types/receiverDashboard";
 import { StatusBadge } from "./StatusBadge";
@@ -27,6 +28,8 @@ export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showDonorInfo, setShowDonorInfo] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
+
+  const hasImages = donation.images && donation.images.length > 0;
 
   useEffect(() => {
     if (donation.category === 'food' && donation.expiry_time) {
@@ -135,7 +138,7 @@ export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
             </div>
           </div>
           
-          {donation.images && donation.images.length > 0 && (
+          {hasImages ? (
             <div className="mt-4">
               <h4 className="text-sm font-medium text-gray-700 mb-2">Images</h4>
               <div className="grid grid-cols-3 gap-3">
@@ -156,6 +159,11 @@ export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
                   </div>
                 ))}
               </div>
+            </div>
+          ) : (
+            <div className="mt-4 py-2 px-3 bg-gray-50 rounded text-sm text-gray-500 flex items-center">
+              <ImageIcon className="w-4 h-4 mr-2 text-gray-400" />
+              No images available for this donation
             </div>
           )}
         </div>
@@ -179,7 +187,7 @@ export const DonationItem = ({ donation, onAction }: DonationItemProps) => {
         )}
       </div>
       
-      {donation.images && donation.images.length > 0 && (
+      {hasImages && (
         <ImageGallery 
           images={donation.images}
           isOpen={showGallery}

@@ -1,5 +1,5 @@
 
-import { Clock, MapPin, Package } from "lucide-react";
+import { Clock, MapPin, Package, Image as ImageIcon } from "lucide-react";
 import { Donation, categoryDisplayNames } from "@/types/receiverDashboard";
 import { formatDate, formatTimeRemaining } from "@/utils/dateUtils";
 import { useEffect, useState } from "react";
@@ -43,6 +43,8 @@ export const DonationCard = ({ donation, onOpen }: DonationCardProps) => {
     return categoryDisplayNames[category] || category;
   };
 
+  const hasImages = donation.images && donation.images.length > 0;
+
   return (
     <div 
       className="bg-white rounded-lg shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow"
@@ -84,7 +86,7 @@ export const DonationCard = ({ donation, onOpen }: DonationCardProps) => {
         </div>
       )}
       
-      {donation.images && donation.images.length > 0 && (
+      {hasImages ? (
         <div className="mt-3 flex">
           <div className="w-16 h-16 rounded overflow-hidden">
             <img 
@@ -98,6 +100,11 @@ export const DonationCard = ({ donation, onOpen }: DonationCardProps) => {
               </div>
             )}
           </div>
+        </div>
+      ) : (
+        <div className="mt-3 flex items-center text-xs text-gray-400">
+          <ImageIcon className="w-3 h-3 mr-1" />
+          <span>No images available</span>
         </div>
       )}
     </div>
