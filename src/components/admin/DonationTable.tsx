@@ -34,6 +34,7 @@ const DonationTable = ({ donations, loading, onDonationRemoved }: DonationTableP
 
   const handleDeleteDonation = async (donationId: number) => {
     try {
+      setDeletingId(donationId);
       const success = await deleteDonation(donationId);
       
       if (!success) throw new Error("Failed to delete donation");
@@ -64,6 +65,11 @@ const DonationTable = ({ donations, loading, onDonationRemoved }: DonationTableP
       setSelectedItemName(itemName);
       setInitialImageIndex(index);
       setShowGallery(true);
+    } else {
+      toast({
+        title: "No Images",
+        description: "There are no images available for this donation.",
+      });
     }
   };
 
@@ -168,8 +174,13 @@ const DonationTable = ({ donations, loading, onDonationRemoved }: DonationTableP
                               variant="ghost" 
                               size="sm" 
                               className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                              disabled={deletingId === donation.id}
                             >
-                              <X className="h-4 w-4" />
+                              {deletingId === donation.id ? (
+                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent"></div>
+                              ) : (
+                                <X className="h-4 w-4" />
+                              )}
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>

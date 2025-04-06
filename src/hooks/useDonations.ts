@@ -9,15 +9,18 @@ export const useDonations = () => {
   const { toast } = useToast();
   const [donations, setDonations] = useState<DonationWithProfiles[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
   const fetchDonations = async () => {
     setLoading(true);
+    setError(null);
     try {
       const enhancedDonations = await fetchDonationsWithProfiles();
       setDonations(enhancedDonations);
     } catch (error: any) {
       console.error("Error in useDonations hook:", error);
+      setError(error.message);
       toast({
         title: "Error",
         description: "Failed to fetch donations: " + error.message,
@@ -53,6 +56,7 @@ export const useDonations = () => {
   return {
     donations: filteredDonations,
     loading,
+    error,
     statusFilter,
     setStatusFilter,
     fetchDonations,
