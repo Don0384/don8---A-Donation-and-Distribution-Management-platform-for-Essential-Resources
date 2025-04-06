@@ -47,10 +47,13 @@ export const DonationCard = ({ donation, onOpen }: DonationCardProps) => {
   const images = Array.isArray(donation.images) ? donation.images : [];
   const hasImages = images.length > 0;
 
+  // Determine if this donation can be accepted
+  const isAcceptable = !(donation.category === 'food' && isExpired);
+
   return (
     <div 
-      className="bg-white rounded-lg shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow"
-      onClick={onOpen}
+      className={`bg-white rounded-lg shadow-sm p-4 ${isAcceptable ? 'cursor-pointer hover:shadow-md' : 'opacity-75'} transition-shadow`}
+      onClick={() => isAcceptable ? onOpen() : null}
     >
       <h3 className="text-lg font-semibold text-gray-900 mb-2">
         {donation.item_name}
@@ -85,6 +88,11 @@ export const DonationCard = ({ donation, onOpen }: DonationCardProps) => {
               {isExpired ? 'Expired' : `Fresh for: ${timeRemaining}`}
             </span>
           </div>
+          {isExpired && (
+            <p className="text-xs text-red-500 mt-1">
+              This food item has expired and cannot be accepted
+            </p>
+          )}
         </div>
       )}
       

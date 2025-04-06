@@ -63,6 +63,26 @@ const ReceiverDashboard = () => {
     
     try {
       setIsSubmittingDonation(true);
+      
+      // Check if it's an expired food item
+      const donation = donations.find(d => d.id === donationId);
+      if (donation?.category === 'food' && donation?.expiry_time) {
+        const expiryTime = new Date(donation.expiry_time);
+        const now = new Date();
+        
+        if (expiryTime <= now) {
+          toast({
+            title: "Cannot accept expired food",
+            description: "This food item has expired and cannot be accepted.",
+            variant: "destructive",
+          });
+          setIsSubmittingDonation(false);
+          setShowPickupDialog(false);
+          setSelectedDonation(null);
+          return;
+        }
+      }
+      
       // First insert the pickup request
       const { error: pickupError } = await supabase
         .from('pickup_requests')
@@ -94,6 +114,21 @@ const ReceiverDashboard = () => {
   };
 
   const handleOpenDonation = (donation: Donation) => {
+    // Check if it's an expired food item before opening the dialog
+    if (donation.category === 'food' && donation.expiry_time) {
+      const expiryTime = new Date(donation.expiry_time);
+      const now = new Date();
+      
+      if (expiryTime <= now) {
+        toast({
+          title: "Expired Food Item",
+          description: "This food item has expired and cannot be accepted.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     setSelectedDonation(donation);
     setShowPickupDialog(true);
   };
