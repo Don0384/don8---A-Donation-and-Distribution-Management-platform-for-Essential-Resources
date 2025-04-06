@@ -24,7 +24,7 @@ export const DonationCard = ({ donation, onOpen }: DonationCardProps) => {
         const remaining = formatTimeRemaining(donation.expiry_time);
         setTimeRemaining(remaining);
         setIsExpired(new Date(donation.expiry_time) <= new Date());
-      }, 1000);
+      }, 60000); // Update once per minute instead of every second
       
       return () => clearInterval(interval);
     }

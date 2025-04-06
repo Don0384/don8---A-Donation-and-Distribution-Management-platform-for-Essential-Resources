@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Donation } from "@/types/receiverDashboard";
@@ -11,7 +11,7 @@ export const useReceiverDonations = (userId: string | undefined) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const fetchDonations = async (status: string = 'All') => {
+  const fetchDonations = useCallback(async (status: string = 'All') => {
     if (!userId) return;
     
     try {
@@ -91,7 +91,7 @@ export const useReceiverDonations = (userId: string | undefined) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userId]);
 
   // Enhanced listener for donation deletions
   useEffect(() => {
@@ -164,7 +164,7 @@ export const useReceiverDonations = (userId: string | undefined) => {
       
       // Update local state
       setDonations(prev => prev.map(d => 
-        d.id === donationId ? { ...d, status: action } : d
+        d.id === donationId ? { ...d, status: action, receiver_id: userId } : d
       ));
       
       return true;

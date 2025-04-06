@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatTimeRemaining } from "@/utils/dateUtils";
 import { useAuth } from "@/context/AuthContext";
@@ -14,85 +14,89 @@ export const useDonorDonations = () => {
   const [timeRemainingMap, setTimeRemainingMap] = useState<Record<number, string | null>>({});
   
   // Fetch donations
-  useEffect(() => {
+  const fetchDonations = useCallback(async () => {
     if (!user) return;
 
-    async function fetchDonations() {
-      try {
-        setIsLoading(true);
+    try {
+      setIsLoading(true);
+      
+      // First get all donations
+      const { data, error } = await supabase
+        .from('donations')
+        .select('*')
+        .eq('donor_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      // Manually join the receiver information
+      const donationsWithReceivers = await Promise.all((data || []).map(async (donation) => {
+        let receiver = null;
         
-        // First get all donations
-        const { data, error } = await supabase
-          .from('donations')
-          .select('*')
-          .eq('donor_id', user.id)
-          .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        
-        // Manually join the receiver information
-        const donationsWithReceivers = await Promise.all((data || []).map(async (donation) => {
-          let receiver = null;
-          
-          if (donation.receiver_id) {
-            try {
-              // Get profile info for the receiver
-              const { data: receiverProfile, error: profileError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', donation.receiver_id)
-                .single();
-                
-              if (!profileError && receiverProfile) {
-                // Get user auth data for email
-                receiver = {
-                  id: donation.receiver_id,
-                  email: receiverProfile.username || "",
-                  first_name: receiverProfile.first_name,
-                  last_name: receiverProfile.last_name,
-                  phone: null // We don't have phone in profile currently
-                };
-              }
-            } catch (err) {
-              console.error("Error fetching receiver profile:", err);
+        if (donation.receiver_id) {
+          try {
+            // Get profile info for the receiver
+            const { data: receiverProfile, error: profileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', donation.receiver_id)
+              .single();
+              
+            if (!profileError && receiverProfile) {
+              // Get user auth data for email
+              receiver = {
+                id: donation.receiver_id,
+                email: receiverProfile.username || "",
+                first_name: receiverProfile.first_name,
+                last_name: receiverProfile.last_name,
+                phone: null // We don't have phone in profile currently
+              };
             }
+          } catch (err) {
+            console.error("Error fetching receiver profile:", err);
           }
+        }
+        
+        // Get pickup requests for this donation
+        const { data: pickupRequests } = await supabase
+          .from('pickup_requests')
+          .select('*')
+          .eq('donation_id', donation.id)
+          .order('pickup_time', { ascending: true });
           
-          // Get pickup requests for this donation
-          const { data: pickupRequests } = await supabase
-            .from('pickup_requests')
-            .select('*')
-            .eq('donation_id', donation.id)
-            .order('pickup_time', { ascending: true });
-            
-          // Construct the enhanced donation with receiver and pickup requests
-          return {
-            ...donation,
-            receiver,
-            pickup_requests: pickupRequests || []
-          } as DonorDonation;
-        }));
+        // Ensure images is always an array
+        const images = donation.images || [];
         
-        setDonations(donationsWithReceivers);
-        
-        // Initialize time remaining for food items
-        const initialTimeMap: Record<number, string | null> = {};
-        data?.forEach(donation => {
-          if (donation.category === 'food' && donation.expiry_time) {
-            initialTimeMap[donation.id] = formatTimeRemaining(donation.expiry_time);
-          }
-        });
-        setTimeRemainingMap(initialTimeMap);
-      } catch (err: any) {
-        console.error('Error fetching donations:', err);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
+        // Construct the enhanced donation with receiver and pickup requests
+        return {
+          ...donation,
+          images,
+          receiver,
+          pickup_requests: pickupRequests || []
+        } as DonorDonation;
+      }));
+      
+      setDonations(donationsWithReceivers);
+      
+      // Initialize time remaining for food items
+      const initialTimeMap: Record<number, string | null> = {};
+      data?.forEach(donation => {
+        if (donation.category === 'food' && donation.expiry_time) {
+          initialTimeMap[donation.id] = formatTimeRemaining(donation.expiry_time);
+        }
+      });
+      setTimeRemainingMap(initialTimeMap);
+    } catch (err: any) {
+      console.error('Error fetching donations:', err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
-
-    fetchDonations();
   }, [user]);
+  
+  useEffect(() => {
+    fetchDonations();
+  }, [fetchDonations]);
   
   // Enhanced listener for donation deletions
   useEffect(() => {
@@ -131,7 +135,7 @@ export const useDonorDonations = () => {
       });
       
       setTimeRemainingMap(prev => ({...prev, ...updatedTimeMap}));
-    }, 1000);
+    }, 60000); // Update once per minute instead of every second
     
     return () => clearInterval(interval);
   }, [donations]);
@@ -140,6 +144,7 @@ export const useDonorDonations = () => {
     donations,
     isLoading,
     error,
-    timeRemainingMap
+    timeRemainingMap,
+    fetchDonations
   };
 };

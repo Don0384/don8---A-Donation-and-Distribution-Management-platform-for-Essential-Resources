@@ -32,6 +32,8 @@ const ReceiverDashboard = () => {
   } = useReceiverDonations(user?.id);
 
   useEffect(() => {
+    let isMounted = true;
+    
     if (user) {
       const loadData = async () => {
         try {
@@ -39,11 +41,10 @@ const ReceiverDashboard = () => {
         } catch (err) {
           console.error("Error loading donations:", err);
         } finally {
-          // Delay removing loading state to prevent flicker
-          setTimeout(() => {
+          // Only update state if component is still mounted
+          if (isMounted) {
             setIsLoadingInitial(false);
-          },
-          300);
+          }
         }
       };
       
@@ -51,9 +52,15 @@ const ReceiverDashboard = () => {
     } else {
       setIsLoadingInitial(false);
     }
+    
+    return () => {
+      isMounted = false;
+    };
   }, [user, fetchDonations]);
 
   const handleAcceptDonation = async (donationId: number, pickupTime: string) => {
+    if (!user) return;
+    
     try {
       setIsSubmittingDonation(true);
       // First insert the pickup request
@@ -61,7 +68,7 @@ const ReceiverDashboard = () => {
         .from('pickup_requests')
         .insert({
           donation_id: donationId,
-          user_id: user?.id,
+          user_id: user.id,
           pickup_time: pickupTime,
         });
 
@@ -137,7 +144,7 @@ const ReceiverDashboard = () => {
             </Button>
           </div>
 
-          {isLoading ? (
+          {isLoading && !isLoadingInitial ? (
             <div className="flex justify-center items-center py-12">
               <Loader2 className="h-8 w-8 animate-spin rounded-full text-primary" />
             </div>

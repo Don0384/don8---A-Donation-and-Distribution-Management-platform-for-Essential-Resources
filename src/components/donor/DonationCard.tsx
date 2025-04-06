@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { Clock, Trash, User, Flag } from "lucide-react";
+import { Clock, Trash, User, Flag, Image as ImageIcon } from "lucide-react";
 import { formatTimeRemaining } from "@/utils/dateUtils";
 import { 
   Card, 
@@ -13,6 +14,7 @@ import { useAuth } from "@/context/AuthContext";
 import { UserContactInfo } from "@/components/UserContactInfo";
 import { ReportUserDialog } from "@/components/ReportUserDialog";
 import { DonationConfirmDialog } from "@/components/donations/DonationConfirmDialog";
+import { ImageGallery } from "@/components/receiver/ImageGallery";
 
 interface DonationProps {
   id: number;
@@ -36,6 +38,7 @@ interface DonationProps {
     pickup_time: string;
     created_at: string;
   }>;
+  images?: string[];
   onDelete?: (id: number) => void;
 }
 
@@ -51,12 +54,15 @@ export default function DonationCard({
   timeRemaining,
   receiver,
   pickupRequests = [],
+  images = [],
   onDelete
 }: DonationProps) {
   const { user } = useAuth();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showReceiverInfo, setShowReceiverInfo] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
+  const [showGallery, setShowGallery] = useState(false);
+  const [initialImageIndex, setInitialImageIndex] = useState(0);
   
   const canDelete = status === "pending";
   
@@ -96,6 +102,13 @@ export default function DonationCard({
     }
   };
 
+  const openGallery = (index: number = 0) => {
+    if (images && images.length > 0) {
+      setInitialImageIndex(index);
+      setShowGallery(true);
+    }
+  };
+
   return (
     <Card className="transition-all hover:shadow-md">
       <CardHeader className="pb-2">
@@ -131,6 +144,44 @@ export default function DonationCard({
             <p className="text-xs text-gray-600 mt-1">
               Expires on {new Date(expiryTime).toLocaleString()}
             </p>
+          </div>
+        )}
+        
+        {/* Display images section */}
+        {images && images.length > 0 && (
+          <div className="mt-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-gray-600">Images</span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-xs text-blue-600"
+                onClick={() => openGallery()}
+              >
+                View all
+              </Button>
+            </div>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {images.slice(0, 3).map((url, index) => (
+                <div 
+                  key={index} 
+                  onClick={() => openGallery(index)} 
+                  className="cursor-pointer h-16 overflow-hidden rounded border border-gray-200 relative group"
+                >
+                  <img 
+                    src={url} 
+                    alt={`${itemName} ${index + 1}`} 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all" />
+                </div>
+              ))}
+              {images.length > 3 && (
+                <div className="flex items-center justify-center text-xs text-gray-500 cursor-pointer h-16 bg-gray-50 rounded border border-gray-200" onClick={() => openGallery(3)}>
+                  +{images.length - 3} more
+                </div>
+              )}
+            </div>
           </div>
         )}
         
@@ -219,6 +270,17 @@ export default function DonationCard({
           reportedUserId={receiver.id}
           reportedUserName={`${receiver.first_name || ''} ${receiver.last_name || ''}`.trim() || 'this recipient'}
           reporterUserId={user.id}
+        />
+      )}
+
+      {/* Image gallery modal */}
+      {images && images.length > 0 && (
+        <ImageGallery
+          images={images}
+          isOpen={showGallery}
+          onClose={() => setShowGallery(false)}
+          initialIndex={initialImageIndex}
+          itemName={itemName}
         />
       )}
     </Card>

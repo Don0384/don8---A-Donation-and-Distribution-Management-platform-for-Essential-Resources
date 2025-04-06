@@ -1,17 +1,33 @@
 
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import { DonationsList } from "@/components/donor/DonationsList";
 import { DashboardHeader } from "@/components/donor/DashboardHeader";
 import { useDonorDonations } from "@/hooks/useDonorDonations";
 import { useNotifications } from "@/hooks/useNotifications";
-import { useEffect } from "react";
 
 const DonorDashboard = () => {
   const navigate = useNavigate();
-  const { donations, isLoading, error, timeRemainingMap } = useDonorDonations();
+  const { donations, isLoading, error, timeRemainingMap, fetchDonations } = useDonorDonations();
   const { unreadMessageCount } = useNotifications("donor");
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        await fetchDonations();
+      } finally {
+        // Delay removing the loading state to prevent flickering
+        setTimeout(() => {
+          setIsInitialLoad(false);
+        }, 300);
+      }
+    };
+    
+    loadData();
+  }, [fetchDonations]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col relative">
@@ -25,7 +41,7 @@ const DonorDashboard = () => {
           
           <DonationsList 
             donations={donations}
-            isLoading={isLoading}
+            isLoading={isLoading || isInitialLoad}
             error={error}
             timeRemainingMap={timeRemainingMap}
           />

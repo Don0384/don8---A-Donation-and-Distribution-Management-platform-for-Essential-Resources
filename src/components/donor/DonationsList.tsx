@@ -56,6 +56,7 @@ export const DonationsList = ({
           timeRemaining={timeRemainingMap[donation.id]}
           receiver={donation.receiver}
           pickupRequests={donation.pickup_requests}
+          images={donation.images}
         />
       ))}
     </div>
