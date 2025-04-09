@@ -83,16 +83,25 @@ export function DonationForm() {
     setIsSubmitting(true);
     try {
       // Prepare the donation data to be submitted
-      const donationData = {
-        item_name: data.item_name,
-        description: data.description || null,
-        quantity: data.quantity,
-        category: data.category,
-        location: data.location,
-        donor_id: user.id,
-        expiry_time: data.expiry_time || null,
-        images: images.length > 0 ? images : null,
-      };
+      let expiryUTC: string | null = null;
+if (data.expiry_time) {
+  const localDate = new Date(data.expiry_time);
+  const utcDate = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
+  expiryUTC = utcDate.toISOString();
+  console.log("Selected time:", data.expiry_time);
+  console.log("Converted UTC time:", expiryUTC);
+}
+
+const donationData = {
+  item_name: data.item_name,
+  description: data.description || null,
+  quantity: data.quantity,
+  category: data.category,
+  location: data.location,
+  donor_id: user.id,
+  expiry_time: expiryUTC,
+  images: images.length > 0 ? images : null,
+};
 
       // Insert the donation into the database
       const { error } = await supabase.from("donations").insert(donationData);
