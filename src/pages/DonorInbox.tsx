@@ -244,7 +244,7 @@ const DonorInbox = () => {
                     <div className="p-4 sm:p-6">
                       <div className="flex justify-between items-start mb-3">
                         <Badge
-                          variant={message.user_type === 'receiver' ? 'info' : 'soft'}
+                          variant={message.user_type === 'receiver' ? 'default' : 'secondary'}
                           className="px-3 py-1"
                         >
                           From {message.sender_name || (message.user_type === 'receiver' ? 'Receiver' : 'Donor')}

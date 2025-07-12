@@ -116,7 +116,7 @@ const ReceiverMessage = () => {
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-receiver-primary hover:bg-receiver-hover"
+                  className="bg-primary hover:bg-primary/90"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Sending..." : "Send Message"}

@@ -15,6 +15,7 @@ import { UserContactInfo } from "@/components/UserContactInfo";
 import { ReportUserDialog } from "@/components/ReportUserDialog";
 import { DonationConfirmDialog } from "@/components/donations/DonationConfirmDialog";
 import { ImageGallery } from "@/components/receiver/ImageGallery";
+import { PickupRequestSelector } from "@/components/donor/PickupRequestSelector";
 
 interface DonationProps {
   id: number;
@@ -40,6 +41,7 @@ interface DonationProps {
   }>;
   images?: string[];
   onDelete?: (id: number) => void;
+  onRecipientSelected?: () => void;
 }
 
 export default function DonationCard({
@@ -55,7 +57,8 @@ export default function DonationCard({
   receiver,
   pickupRequests = [],
   images = [],
-  onDelete
+  onDelete,
+  onRecipientSelected
 }: DonationProps) {
   const { user } = useAuth();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -63,6 +66,7 @@ export default function DonationCard({
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [initialImageIndex, setInitialImageIndex] = useState(0);
+  const [showRecipientSelector, setShowRecipientSelector] = useState(false);
   
   const canDelete = status === "pending";
   
@@ -214,7 +218,18 @@ export default function DonationCard({
         
         {status === "pending" && sortedRequests.length > 0 && (
           <div className="mt-3 border-t border-gray-100 pt-3">
-            <h4 className="text-sm font-medium mb-2">Pickup Requests ({sortedRequests.length})</h4>
+            <div className="flex justify-between items-center mb-2">
+              <h4 className="text-sm font-medium">Pickup Requests ({sortedRequests.length})</h4>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowRecipientSelector(true)}
+                className="text-primary hover:text-primary-foreground"
+              >
+                <User className="h-3.5 w-3.5 mr-1" />
+                Select Recipient
+              </Button>
+            </div>
             <div className="space-y-2">
               {sortedRequests.map((request, idx) => (
                 <div key={idx} className="text-xs p-2 bg-gray-50 rounded">
@@ -283,6 +298,17 @@ export default function DonationCard({
           itemName={itemName}
         />
       )}
+
+      {/* Recipient selector dialog */}
+      <PickupRequestSelector
+        donationId={id}
+        donationTitle={itemName}
+        isOpen={showRecipientSelector}
+        onClose={() => setShowRecipientSelector(false)}
+        onSuccess={() => {
+          onRecipientSelected?.();
+        }}
+      />
     </Card>
   );
 }

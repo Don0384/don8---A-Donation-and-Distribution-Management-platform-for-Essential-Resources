@@ -9,6 +9,7 @@ interface DonationsListProps {
   error: string | null;
   timeRemainingMap: Record<number, string | null>;
   onDeleteDonation?: (id: number) => Promise<void>;
+  onRecipientSelected?: () => void;
 }
 
 export const DonationsList = ({
@@ -16,7 +17,8 @@ export const DonationsList = ({
   isLoading,
   error,
   timeRemainingMap,
-  onDeleteDonation
+  onDeleteDonation,
+  onRecipientSelected
 }: DonationsListProps) => {
   if (isLoading) {
     return (
@@ -60,6 +62,7 @@ export const DonationsList = ({
           pickupRequests={donation.pickup_requests}
           images={donation.images}
           onDelete={onDeleteDonation}
+          onRecipientSelected={onRecipientSelected}
         />
       ))}
     </div>

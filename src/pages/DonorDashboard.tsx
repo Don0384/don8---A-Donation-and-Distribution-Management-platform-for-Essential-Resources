@@ -44,6 +44,7 @@ const DonorDashboard = () => {
             isLoading={isLoading || isInitialLoad}
             error={error}
             timeRemainingMap={timeRemainingMap}
+            onRecipientSelected={fetchDonations}
           />
 
           <div className="fixed bottom-6 right-6">
