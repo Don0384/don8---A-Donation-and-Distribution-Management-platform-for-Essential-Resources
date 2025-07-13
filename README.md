@@ -181,3 +181,6 @@ cd don8
 npm install
 
 # Set up envi
+
+Project submitted to APJ Abdul Kalam Technological University as part of 
+partial fulfillment for B.Tech in Computer Science & Engineering.
