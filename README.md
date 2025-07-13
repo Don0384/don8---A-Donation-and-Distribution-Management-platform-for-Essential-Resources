@@ -182,5 +182,13 @@ npm install
 
 # Set up envi
 
-Project submitted to APJ Abdul Kalam Technological University as part of 
-partial fulfillment for B.Tech in Computer Science & Engineering.
+📄 Project Submission
+
+This project was submitted to **APJ Abdul Kalam Technological University (KTU)**  
+as part of the partial fulfillment for the degree of **Bachelor of Technology (B.Tech)**  
+in **Computer Science and Engineering**, academic year 2025–2026.
+
+🎓 Submitted by:
+- Aadhith C Joseph
+- Muhammed Sameer S Kunju
+- Nafiya Nafeesa K P
